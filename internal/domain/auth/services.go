@@ -1,8 +1,8 @@
 package auth
 
 type LoginRequest struct {
-	name     string
-	password string
+	Name     string
+	Password string
 }
 
 type LoginService interface {
