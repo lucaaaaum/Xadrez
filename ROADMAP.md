@@ -6,15 +6,16 @@
 
 - [x] Servidor TCP que aceita várias conexões simultâneas.
 - [ ] Porta lida da configuração.
-- [ ] Sessão por conexão, associando a conexão ao usuário autenticado.
+- [x] Sessão por conexão, associando a conexão ao usuário autenticado.
 - [ ] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
 
 ### Protocolo
 
-- [ ] Envelope de mensagem (JSON delimitado por linha, com `type` e `payload`).
+- [x] Envelope de mensagem (JSON delimitado por linha, com `type` e `payload`).
 - [ ] Tipos de mensagem de cliente e servidor.
-- [ ] Respostas de erro padronizadas.
+- [x] Respostas de erro padronizadas.
+- [ ] Leitura da resposta de uma requisição, correlacionada pelo `id`.
 - [ ] Limite de tamanho de mensagem.
 
 ### Segurança
@@ -27,7 +28,7 @@
 
 ### Correções
 
-- [ ] Import inexistente de `uuid` em `internal/infra/auth.go`.
+- [x] Import inexistente de `uuid` em `internal/infra/auth.go`.
 - [ ] Receivers por ponteiro nos serviços em memória, para que o estado persista.
 - [ ] Acesso concorrente seguro ao estado compartilhado.
 - [ ] Remoção do usuário em `RegisterUserLogout`.
