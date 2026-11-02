@@ -1,53 +1,40 @@
 package main
 
 import (
-	"bufio"
-	"net"
+	"xadrez/cmd/backend/handlers"
+	"xadrez/internal/domain/auth"
 	"xadrez/internal/domain/users"
 	"xadrez/internal/infra"
+	"xadrez/internal/infra/tcp"
 
 	"charm.land/log/v2"
 )
 
 type Services struct {
-	userService users.UserService
-}
-
-func main() {
-	services := newServices()
-
-	ln, err := net.Listen("tcp", ":9000")
-	if err != nil {
-		log.Fatalf("ocorreu um erro durante a inicialização do servidor: %v", err)
-	}
-	log.Infof("servidor iniciado na porta 9000...")
-
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Errorf("ocorreu um erro ao conectar com um cliente: %v", err)
-			continue
-		}
-		go handle(services, conn)
-	}
+	loginService auth.LoginService
+	userService  users.UserService
 }
 
 func newServices() Services {
 	return Services{
-		userService: infra.NewInMemoryUserService(),
+		loginService: infra.NewInMemoryAuthService(),
+		userService:  infra.NewInMemoryUserService(),
 	}
 }
 
-func handle(services Services, conn net.Conn) {
-	defer conn.Close()
-	clientRemoteAddr := conn.RemoteAddr().String()
-	log.Infof("conectado ao cliente %v...", clientRemoteAddr)
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		line := scanner.Text()
-		log.Infof("[%v]: %v", clientRemoteAddr, line)
-	}
-	if err := scanner.Err(); err != nil {
-		log.Errorf("ocorreu um erro durante a leitura de uma mensagem do cliente: %v", err)
+func newHandlerManager(services Services) *tcp.HandlerManager {
+	handlerManager := tcp.NewHandlerManager()
+
+	authHandler := handlers.NewAuthHandler(services.loginService)
+	handlerManager.RegisterRequestHandler("login", authHandler.HandleLogin)
+
+	return handlerManager
+}
+
+func main() {
+	services := newServices()
+	server := tcp.NewTCPServer(newHandlerManager(services))
+	if err := server.ListenAndServe(":9000"); err != nil {
+		log.Fatal("erro no servidor", "erro", err)
 	}
 }
