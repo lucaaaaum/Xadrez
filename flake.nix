@@ -16,6 +16,7 @@
             gopls
             gotools
             netcat-openbsd
+            ent-go
           ];
         };
       });
