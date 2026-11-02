@@ -4,6 +4,15 @@ charm.land/lipgloss/v2
 # charm.land/log/v2 v2.0.1
 ## explicit; go 1.25.8
 charm.land/log/v2
+# entgo.io/ent v0.14.6
+## explicit; go 1.24
+entgo.io/ent
+entgo.io/ent/dialect
+entgo.io/ent/schema
+entgo.io/ent/schema/edge
+entgo.io/ent/schema/field
+entgo.io/ent/schema/index
+entgo.io/ent/schema/mixin
 # github.com/charmbracelet/colorprofile v0.4.3
 ## explicit; go 1.25.0
 github.com/charmbracelet/colorprofile
@@ -33,6 +42,9 @@ github.com/clipperhouse/uax29/v2/graphemes
 # github.com/go-logfmt/logfmt v0.6.1
 ## explicit; go 1.21
 github.com/go-logfmt/logfmt
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
 # github.com/lucasb-eyer/go-colorful v1.4.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful

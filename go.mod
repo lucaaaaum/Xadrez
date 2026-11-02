@@ -2,7 +2,11 @@ module xadrez
 
 go 1.27.3
 
-require charm.land/log/v2 v2.0.1
+require (
+	charm.land/log/v2 v2.0.1
+	entgo.io/ent v0.14.6
+	github.com/google/uuid v1.6.0
+)
 
 require (
 	charm.land/lipgloss/v2 v2.0.5 // indirect
