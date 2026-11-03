@@ -2,6 +2,7 @@ package main
 
 import (
 	"xadrez/cmd/backend/handlers"
+	"xadrez/ent"
 	"xadrez/internal/domain/auth"
 	"xadrez/internal/domain/users"
 	"xadrez/internal/infra"
@@ -15,9 +16,9 @@ type Services struct {
 	userService  users.UserService
 }
 
-func newServices() Services {
+func newServices(client *ent.Client) Services {
 	return Services{
-		loginService: infra.NewInMemoryAuthService(),
+		loginService: infra.NewAuthService(client),
 		userService:  infra.NewInMemoryUserService(),
 	}
 }
@@ -32,7 +33,8 @@ func newHandlerManager(services Services) *tcp.HandlerManager {
 }
 
 func main() {
-	services := newServices()
+	var client *ent.Client
+	services := newServices(client)
 	server := tcp.NewTCPServer(newHandlerManager(services))
 	if err := server.ListenAndServe(":9000"); err != nil {
 		log.Fatal("erro no servidor", "erro", err)

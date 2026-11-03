@@ -20,7 +20,7 @@ func NewAuthHandler(loginService auth.LoginService) *AuthHandler {
 }
 
 func (h *AuthHandler) HandleLogin(ctx context.Context, request messages.LoginRequest) (messages.LoginResponse, error) {
-	token, err := h.loginService.Login(request.Name, request.Password)
+	token, err := h.loginService.Login(ctx, request.Name, request.Password)
 	if err != nil {
 		log.Warn("falha no login", "usuário", request.Name, "erro", err)
 		return messages.LoginResponse{}, tcp.NewClientError("usuário ou senha inválidos")

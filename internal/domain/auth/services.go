@@ -1,5 +1,7 @@
 package auth
 
+import "context"
+
 type LoginService interface {
-	Login(name, password string) (string, error)
+	Login(ctx context.Context, name, password string) (string, error)
 }
