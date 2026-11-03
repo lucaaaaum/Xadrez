@@ -21,7 +21,7 @@
 ### Segurança
 
 - [ ] TLS na conexão cliente-servidor.
-- [ ] Senhas com hash (bcrypt).
+- [x] Senhas com hash (Argon2id).
 - [ ] Token de sessão aleatório (`crypto/rand`).
 - [ ] Validação de que só o jogador da vez move as próprias peças.
 - [ ] Limite de tentativas de login.
