@@ -8,3 +8,6 @@ import (
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// UserPassword is the predicate function for userpassword builders.
+type UserPassword func(*sql.Selector)

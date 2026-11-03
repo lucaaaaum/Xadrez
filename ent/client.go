@@ -12,10 +12,12 @@ import (
 	"xadrez/ent/migrate"
 
 	"xadrez/ent/user"
+	"xadrez/ent/userpassword"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -26,6 +28,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserPassword is the client for interacting with the UserPassword builders.
+	UserPassword *UserPasswordClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -38,6 +42,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.User = NewUserClient(c.config)
+	c.UserPassword = NewUserPasswordClient(c.config)
 }
 
 type (
@@ -128,9 +133,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		User:         NewUserClient(cfg),
+		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
 }
 
@@ -148,9 +154,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:          ctx,
+		config:       cfg,
+		User:         NewUserClient(cfg),
+		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
 }
 
@@ -180,12 +187,14 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.User.Use(hooks...)
+	c.UserPassword.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.User.Intercept(interceptors...)
+	c.UserPassword.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -193,6 +202,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserPasswordMutation:
+		return c.UserPassword.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -306,6 +317,22 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
+// QueryPassword queries the password edge of a User.
+func (c *UserClient) QueryPassword(_m *User) *UserPasswordQuery {
+	query := (&UserPasswordClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(userpassword.Table, userpassword.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.PasswordTable, user.PasswordColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -331,12 +358,161 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// UserPasswordClient is a client for the UserPassword schema.
+type UserPasswordClient struct {
+	config
+}
+
+// NewUserPasswordClient returns a client for the UserPassword from the given config.
+func NewUserPasswordClient(c config) *UserPasswordClient {
+	return &UserPasswordClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userpassword.Hooks(f(g(h())))`.
+func (c *UserPasswordClient) Use(hooks ...Hook) {
+	c.hooks.UserPassword = append(c.hooks.UserPassword, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userpassword.Intercept(f(g(h())))`.
+func (c *UserPasswordClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserPassword = append(c.inters.UserPassword, interceptors...)
+}
+
+// Create returns a builder for creating a UserPassword entity.
+func (c *UserPasswordClient) Create() *UserPasswordCreate {
+	mutation := newUserPasswordMutation(c.config, OpCreate)
+	return &UserPasswordCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserPassword entities.
+func (c *UserPasswordClient) CreateBulk(builders ...*UserPasswordCreate) *UserPasswordCreateBulk {
+	return &UserPasswordCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserPasswordClient) MapCreateBulk(slice any, setFunc func(*UserPasswordCreate, int)) *UserPasswordCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserPasswordCreateBulk{err: fmt.Errorf("calling to UserPasswordClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserPasswordCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserPasswordCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserPassword.
+func (c *UserPasswordClient) Update() *UserPasswordUpdate {
+	mutation := newUserPasswordMutation(c.config, OpUpdate)
+	return &UserPasswordUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserPasswordClient) UpdateOne(_m *UserPassword) *UserPasswordUpdateOne {
+	mutation := newUserPasswordMutation(c.config, OpUpdateOne, withUserPassword(_m))
+	return &UserPasswordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserPasswordClient) UpdateOneID(id int) *UserPasswordUpdateOne {
+	mutation := newUserPasswordMutation(c.config, OpUpdateOne, withUserPasswordID(id))
+	return &UserPasswordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserPassword.
+func (c *UserPasswordClient) Delete() *UserPasswordDelete {
+	mutation := newUserPasswordMutation(c.config, OpDelete)
+	return &UserPasswordDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserPasswordClient) DeleteOne(_m *UserPassword) *UserPasswordDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserPasswordClient) DeleteOneID(id int) *UserPasswordDeleteOne {
+	builder := c.Delete().Where(userpassword.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserPasswordDeleteOne{builder}
+}
+
+// Query returns a query builder for UserPassword.
+func (c *UserPasswordClient) Query() *UserPasswordQuery {
+	return &UserPasswordQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserPassword},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserPassword entity by its id.
+func (c *UserPasswordClient) Get(ctx context.Context, id int) (*UserPassword, error) {
+	return c.Query().Where(userpassword.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserPasswordClient) GetX(ctx context.Context, id int) *UserPassword {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserPassword.
+func (c *UserPasswordClient) QueryUser(_m *UserPassword) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userpassword.Table, userpassword.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, userpassword.UserTable, userpassword.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserPasswordClient) Hooks() []Hook {
+	return c.hooks.UserPassword
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserPasswordClient) Interceptors() []Interceptor {
+	return c.inters.UserPassword
+}
+
+func (c *UserPasswordClient) mutate(ctx context.Context, m *UserPasswordMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserPasswordCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserPasswordUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserPasswordUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserPasswordDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserPassword mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User []ent.Hook
+		User, UserPassword []ent.Hook
 	}
 	inters struct {
-		User []ent.Interceptor
+		User, UserPassword []ent.Interceptor
 	}
 )

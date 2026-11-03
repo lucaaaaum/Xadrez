@@ -4,6 +4,8 @@ import (
 	"regexp"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -27,5 +29,9 @@ func (User) Fields() []ent.Field {
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("password", UserPassword.Type).
+			Unique().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +21,17 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// EdgePassword holds the string denoting the password edge name in mutations.
+	EdgePassword = "password"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// PasswordTable is the table that holds the password relation/edge.
+	PasswordTable = "user_passwords"
+	// PasswordInverseTable is the table name for the UserPassword entity.
+	// It exists in this package in order to avoid circular dependency with the "userpassword" package.
+	PasswordInverseTable = "user_passwords"
+	// PasswordColumn is the table column denoting the password relation/edge.
+	PasswordColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -76,4 +86,18 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByPasswordField orders the results by password field.
+func ByPasswordField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPasswordStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newPasswordStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PasswordInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, PasswordTable, PasswordColumn),
+	)
 }

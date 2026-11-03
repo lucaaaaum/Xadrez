@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 	"xadrez/ent/user"
+	"xadrez/ent/userpassword"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -67,6 +68,25 @@ func (_c *UserCreate) SetNillableID(v *uuid.UUID) *UserCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// SetPasswordID sets the "password" edge to the UserPassword entity by ID.
+func (_c *UserCreate) SetPasswordID(id int) *UserCreate {
+	_c.mutation.SetPasswordID(id)
+	return _c
+}
+
+// SetNillablePasswordID sets the "password" edge to the UserPassword entity by ID if the given value is not nil.
+func (_c *UserCreate) SetNillablePasswordID(id *int) *UserCreate {
+	if id != nil {
+		_c = _c.SetPasswordID(*id)
+	}
+	return _c
+}
+
+// SetPassword sets the "password" edge to the UserPassword entity.
+func (_c *UserCreate) SetPassword(v *UserPassword) *UserCreate {
+	return _c.SetPasswordID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -180,6 +200,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if nodes := _c.mutation.PasswordIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.PasswordTable,
+			Columns: []string{user.PasswordColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userpassword.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

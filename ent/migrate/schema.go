@@ -21,11 +21,33 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// UserPasswordsColumns holds the columns for the "user_passwords" table.
+	UserPasswordsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "hash", Type: field.TypeString, Size: 255, SchemaType: map[string]string{"postgres": "varchar(255)"}},
+		{Name: "user_id", Type: field.TypeUUID, Unique: true},
+	}
+	// UserPasswordsTable holds the schema information for the "user_passwords" table.
+	UserPasswordsTable = &schema.Table{
+		Name:       "user_passwords",
+		Columns:    UserPasswordsColumns,
+		PrimaryKey: []*schema.Column{UserPasswordsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_passwords_users_password",
+				Columns:    []*schema.Column{UserPasswordsColumns[2]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		UsersTable,
+		UserPasswordsTable,
 	}
 )
 
 func init() {
+	UserPasswordsTable.ForeignKeys[0].RefTable = UsersTable
 }

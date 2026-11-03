@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"sync"
 	"xadrez/ent/user"
+	"xadrez/ent/userpassword"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -73,7 +74,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			user.Table: user.ValidColumn,
+			user.Table:         user.ValidColumn,
+			userpassword.Table: userpassword.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

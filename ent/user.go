@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"xadrez/ent/user"
+	"xadrez/ent/userpassword"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -23,8 +24,31 @@ type User struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
-	Name         string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Password holds the value of the password edge.
+	Password *UserPassword `json:"password,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// PasswordOrErr returns the Password value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) PasswordOrErr() (*UserPassword, error) {
+	if e.Password != nil {
+		return e.Password, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: userpassword.Label}
+	}
+	return nil, &NotLoadedError{edge: "password"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -88,6 +112,11 @@ func (_m *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryPassword queries the "password" edge of the User entity.
+func (_m *User) QueryPassword() *UserPasswordQuery {
+	return NewUserClient(_m.config).QueryPassword(_m)
 }
 
 // Update returns a builder for updating this User.

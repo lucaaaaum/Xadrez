@@ -6,6 +6,7 @@ import (
 	"time"
 	"xadrez/ent/schema"
 	"xadrez/ent/user"
+	"xadrez/ent/userpassword"
 
 	"github.com/google/uuid"
 )
@@ -51,4 +52,24 @@ func init() {
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	userpasswordFields := schema.UserPassword{}.Fields()
+	_ = userpasswordFields
+	// userpasswordDescHash is the schema descriptor for hash field.
+	userpasswordDescHash := userpasswordFields[1].Descriptor()
+	// userpassword.HashValidator is a validator for the "hash" field. It is called by the builders before save.
+	userpassword.HashValidator = func() func(string) error {
+		validators := userpasswordDescHash.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(hash string) error {
+			for _, fn := range fns {
+				if err := fn(hash); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 }
