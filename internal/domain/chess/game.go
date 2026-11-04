@@ -3,72 +3,38 @@ package chess
 import "fmt"
 
 type Game struct {
-	ID    string
-	board *board
+	ID          string
+	board       *board
+	currentTurn PieceColor
 }
 
 func NewGame(name string) *Game {
 	return &Game{
-		ID:    name,
-		board: newBoard(),
+		ID:          name,
+		board:       newBoard(),
+		currentTurn: White,
 	}
 }
 
-func (g *Game) Move(fromX, fromY, toX, toY int) error {
-	p := g.board.getPieceAt(fromX, fromY)
-	if p == nil {
-		return fmt.Errorf("no piece at (%d, %d)", fromX, fromY)
+func (g *Game) MakeMove(color PieceColor, fromX, fromY, toX, toY int) error {
+	if color != g.currentTurn {
+		return fmt.Errorf("it's not %v's turn", color)
 	}
 
-	if !canMove(p, toX, toY) {
-		return fmt.Errorf("invalid move for piece %v at (%d, %d)", p.kind, fromX, fromY)
+	err := g.board.Move(fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
 
-	target := g.board.getPieceAt(toX, toY)
-	if target != nil && target.color == p.color {
-		return fmt.Errorf("cannot capture own piece at (%d, %d)", toX, toY)
-	}
-
-	p.x = toX
-	p.y = toY
-
-	if target != nil {
-		g.board.removePiece(target)
+	if g.currentTurn == White {
+		g.currentTurn = Black
+	} else {
+		g.currentTurn = White
 	}
 
 	return nil
 }
 
-func canMove(p *piece, toX, toY int) bool {
-	switch p.kind {
-	case Pawn:
-		if p.color == White {
-			return (toY == p.y+1 && toX == p.x) || (toY == p.y+2 && toX == p.x && p.y == 1)
-		} else {
-			return (toY == p.y-1 && toX == p.x) || (toY == p.y-2 && toX == p.x && p.y == 6)
-		}
-	case Knight:
-		return (abs(toX-p.x) == 2 && abs(toY-p.y) == 1) || (abs(toX-p.x) == 1 && abs(toY-p.y) == 2)
-	case Bishop:
-		return abs(toX-p.x) == abs(toY-p.y)
-	case Rook:
-		return toX == p.x || toY == p.y
-	case Queen:
-		return abs(toX-p.x) == abs(toY-p.y) || toX == p.x || toY == p.y
-	case King:
-		return abs(toX-p.x) <= 1 && abs(toY-p.y) <= 1
-	default:
-		return false
-	}
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func (g *Game) GetBoard() []*piece {
+func (g *Game) GetBoard() [8][8]*piece {
 	return g.board.pieces
 }

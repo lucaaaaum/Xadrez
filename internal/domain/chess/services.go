@@ -4,5 +4,5 @@ type GameService interface {
 	CreateGame(name string) (*Game, error)
 	ListGames() ([]*Game, error)
 	GetGame(id string) (*Game, error)
-	MakeMove(gameID string, fromX, fromY, toX, toY int) error
+	MakeMove(gameID string, color PieceColor, fromX, fromY, toX, toY int) error
 }

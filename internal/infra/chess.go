@@ -37,10 +37,10 @@ func (s *InMemoryGameService) GetGame(id string) (*chess.Game, error) {
 	return game, nil
 }
 
-func (s *InMemoryGameService) MakeMove(gameID string, fromX, fromY, toX, toY int) error {
+func (s *InMemoryGameService) MakeMove(gameID string, color chess.PieceColor, fromX, fromY, toX, toY int) error {
 	game, err := s.GetGame(gameID)
 	if err != nil {
 		return err
 	}
-	return game.Move(fromX, fromY, toX, toY)
+	return game.MakeMove(color, fromX, fromY, toX, toY)
 }

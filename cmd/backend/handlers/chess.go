@@ -53,14 +53,16 @@ func (h *ChessHandler) HandleGetBoardRequest(ctx context.Context, request messag
 
 func getBoardResponseFromGame(game *chess.Game) messages.BoardResponse {
 	pieces := game.GetBoard()
-	responsePieces := make([]messages.Piece, len(pieces))
-	for i, p := range pieces {
-		x, y := p.GetPosition()
-		responsePieces[i] = messages.Piece{
-			Kind:  p.GetKind(),
-			Color: p.GetColor(),
-			X:     x,
-			Y:     y,
+	responsePieces := [8][8]messages.Piece{}
+	for x, row := range pieces {
+		for y, p := range row {
+			if p == nil {
+				continue
+			}
+			responsePieces[x][y] = messages.Piece{
+				Kind:  p.GetKind(),
+				Color: p.GetColor(),
+			}
 		}
 	}
 	return messages.BoardResponse{
@@ -69,7 +71,7 @@ func getBoardResponseFromGame(game *chess.Game) messages.BoardResponse {
 }
 
 func (h *ChessHandler) HandleMakeMoveRequest(ctx context.Context, request messages.MoveRequest) (messages.BoardResponse, error) {
-	err := h.gameService.MakeMove(request.GameID, request.FromX, request.FromY, request.ToX, request.ToY)
+	err := h.gameService.MakeMove(request.GameID, request.Color, request.FromX, request.FromY, request.ToX, request.ToY)
 	if err != nil {
 		return messages.BoardResponse{}, err
 	}
@@ -83,5 +85,5 @@ func (h *ChessHandler) HandleMakeMoveRequest(ctx context.Context, request messag
 }
 
 func (h *ChessHandler) HandleValidateMoveRequest(ctx context.Context, request messages.ValidateMoveRequest) error {
-	return h.gameService.MakeMove(request.GameID, request.FromX, request.FromY, request.ToX, request.ToY)
+	return h.gameService.MakeMove(request.GameID, request.Color, request.FromX, request.FromY, request.ToX, request.ToY)
 }
