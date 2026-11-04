@@ -17,30 +17,18 @@ func NewInMemoryGameService() *InMemoryGameService {
 
 func (s *InMemoryGameService) CreateGame(name string) (*chess.Game, error) {
 	game := chess.NewGame(name)
-	s.games[game.ID] = game
+	s.games[name] = game
 	return game, nil
 }
 
-func (s *InMemoryGameService) ListGames() ([]*chess.Game, error) {
-	games := make([]*chess.Game, 0, len(s.games))
-	for _, game := range s.games {
-		games = append(games, game)
-	}
-	return games, nil
+func (s *InMemoryGameService) ListGames() (map[string]*chess.Game, error) {
+	return s.games, nil
 }
 
-func (s *InMemoryGameService) GetGame(id string) (*chess.Game, error) {
-	game, exists := s.games[id]
+func (s *InMemoryGameService) GetGame(name string) (*chess.Game, error) {
+	game, exists := s.games[name]
 	if !exists {
-		return nil, fmt.Errorf("game with ID %s not found", id)
+		return nil, fmt.Errorf("um jogo com nome %s não foi encontrado", name)
 	}
 	return game, nil
-}
-
-func (s *InMemoryGameService) MakeMove(gameID string, color chess.PieceColor, fromX, fromY, toX, toY int) error {
-	game, err := s.GetGame(gameID)
-	if err != nil {
-		return err
-	}
-	return game.MakeMove(color, fromX, fromY, toX, toY)
 }

@@ -12,18 +12,17 @@ type CreateGameRequest struct {
 }
 
 type CreateGameResponse struct {
-	GameID string `json:"game_id"`
 }
 
 type ListGamesRequest struct {
 }
 
 type ListGamesResponse struct {
-	GameIDs []string `json:"game_ids"`
+	GameNames []string `json:"game_names"`
 }
 
 type GetBoardRequest struct {
-	GameID string `json:"game_id"`
+	GameName string `json:"game_name"`
 }
 
 type BoardResponse struct {
@@ -31,19 +30,19 @@ type BoardResponse struct {
 }
 
 type ValidateMoveRequest struct {
-	GameID string           `json:"game_id"`
-	Color  chess.PieceColor `json:"color"`
-	FromX  int              `json:"from_x"`
-	FromY  int              `json:"from_y"`
-	ToX    int              `json:"to_x"`
-	ToY    int              `json:"to_y"`
+	GameName string           `json:"game_name"`
+	Color    chess.PieceColor `json:"color"`
+	FromX    int              `json:"from_x"`
+	FromY    int              `json:"from_y"`
+	ToX      int              `json:"to_x"`
+	ToY      int              `json:"to_y"`
 }
 
 type MoveRequest struct {
-	GameID string           `json:"game_id"`
-	Color  chess.PieceColor `json:"color"`
-	FromX  int              `json:"from_x"`
-	FromY  int              `json:"from_y"`
-	ToX    int              `json:"to_x"`
-	ToY    int              `json:"to_y"`
+	GameName string           `json:"game_name"`
+	Color    chess.PieceColor `json:"color"`
+	FromX    int              `json:"from_x"`
+	FromY    int              `json:"from_y"`
+	ToX      int              `json:"to_x"`
+	ToY      int              `json:"to_y"`
 }
