@@ -21,8 +21,6 @@ const (
 type piece struct {
 	kind  PieceKind
 	color PieceColor
-	x     int
-	y     int
 }
 
 func newPiece(kind PieceKind, color PieceColor) *piece {
@@ -38,8 +36,4 @@ func (p *piece) GetKind() PieceKind {
 
 func (p *piece) GetColor() PieceColor {
 	return p.color
-}
-
-func (p *piece) GetPosition() (int, int) {
-	return p.x, p.y
 }

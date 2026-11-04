@@ -1,7 +1,7 @@
 package chess
 
 type board struct {
-	pieces []*piece
+	pieces [8][8]*piece
 }
 
 func newBoard() *board {
@@ -37,25 +37,13 @@ func newBoard() *board {
 }
 
 func (b *board) getPieceAt(x, y int) *piece {
-	for _, p := range b.pieces {
-		if p.x == x && p.y == y {
-			return p
-		}
-	}
-	return nil
+	return b.pieces[x][y]
 }
 
 func (b *board) addPiece(p *piece, x, y int) {
-	p.x = x
-	p.y = y
-	b.pieces = append(b.pieces, p)
+	b.pieces[x][y] = p
 }
 
-func (b *board) removePiece(p *piece) {
-	for i, piece := range b.pieces {
-		if piece == p {
-			b.pieces = append(b.pieces[:i], b.pieces[i+1:]...)
-			return
-		}
-	}
+func (b *board) removePiece(x, y int) {
+	b.pieces[x][y] = nil
 }
