@@ -60,14 +60,26 @@
 
 ### Jogo
 
-- [ ] Regras do xadrez: validação de lances, roque, en passant, promoção.
+- [x] Decidir: biblioteca de xadrez ou implementação própria.
+- [x] Movimento básico de cada peça.
+- [ ] Lances restritos aos limites do tabuleiro.
+- [ ] Caminho livre para bispo, torre, dama e avanço do peão.
+- [ ] Captura do peão na diagonal, sem captura no avanço reto.
+- [ ] Lance que deixa o próprio rei em xeque é rejeitado.
+- [ ] Roque, sem passar por casa atacada e com rei e torre sem terem se movido.
+- [ ] En passant.
+- [ ] Promoção, com a peça escolhida no `MoveRequest`.
 - [ ] Turnos, com a fila de ações por partida.
 - [ ] Tabuleiro atualizado para os dois jogadores a cada lance.
-- [ ] Decidir: biblioteca de xadrez ou implementação própria.
+- [ ] Erros do domínio enviados ao cliente como erro de cliente.
+- [ ] Nome de partida único na criação.
+- [ ] `HandleValidateMoveRequest` validando sem executar o lance.
 
 ### Fim de jogo
 
-- [ ] Xeque-mate, afogamento e demais empates.
+- [ ] Xeque-mate.
+- [ ] Afogamento.
+- [ ] Empate por 50 lances, repetição tripla e material insuficiente.
 - [ ] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
 - [ ] Desistência, com vitória concedida ao oponente.
 - [ ] Vitória por desconexão do oponente.
