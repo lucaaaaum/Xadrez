@@ -239,6 +239,52 @@ func HasPasswordWith(preds ...predicate.UserPassword) predicate.User {
 	})
 }
 
+// HasWhiteGames applies the HasEdge predicate on the "white_games" edge.
+func HasWhiteGames() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WhiteGamesTable, WhiteGamesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWhiteGamesWith applies the HasEdge predicate on the "white_games" edge with a given conditions (other predicates).
+func HasWhiteGamesWith(preds ...predicate.Game) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newWhiteGamesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBlackGames applies the HasEdge predicate on the "black_games" edge.
+func HasBlackGames() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BlackGamesTable, BlackGamesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBlackGamesWith applies the HasEdge predicate on the "black_games" edge with a given conditions (other predicates).
+func HasBlackGamesWith(preds ...predicate.Game) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newBlackGamesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

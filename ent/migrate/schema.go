@@ -8,6 +8,73 @@ import (
 )
 
 var (
+	// GamesColumns holds the columns for the "games" table.
+	GamesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 255, SchemaType: map[string]string{"postgres": "varchar(255)"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive"}, Default: "active"},
+		{Name: "result", Type: field.TypeEnum, Nullable: true, Enums: []string{"white", "black", "draw"}},
+		{Name: "termination", Type: field.TypeEnum, Nullable: true, Enums: []string{"checkmate", "stalemate", "resignation", "disconnection", "fifty_moves", "threefold_repetition", "insufficient_material"}},
+		{Name: "finished_at", Type: field.TypeTime, Nullable: true},
+		{Name: "white_player_id", Type: field.TypeUUID},
+		{Name: "black_player_id", Type: field.TypeUUID},
+	}
+	// GamesTable holds the schema information for the "games" table.
+	GamesTable = &schema.Table{
+		Name:       "games",
+		Columns:    GamesColumns,
+		PrimaryKey: []*schema.Column{GamesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "games_users_white_games",
+				Columns:    []*schema.Column{GamesColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "games_users_black_games",
+				Columns:    []*schema.Column{GamesColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// GameMovesColumns holds the columns for the "game_moves" table.
+	GameMovesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "ply", Type: field.TypeInt},
+		{Name: "from_x", Type: field.TypeInt},
+		{Name: "from_y", Type: field.TypeInt},
+		{Name: "to_x", Type: field.TypeInt},
+		{Name: "to_y", Type: field.TypeInt},
+		{Name: "promotion", Type: field.TypeEnum, Nullable: true, Enums: []string{"queen", "rook", "bishop", "knight"}},
+		{Name: "game_id", Type: field.TypeUUID},
+	}
+	// GameMovesTable holds the schema information for the "game_moves" table.
+	GameMovesTable = &schema.Table{
+		Name:       "game_moves",
+		Columns:    GameMovesColumns,
+		PrimaryKey: []*schema.Column{GameMovesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "game_moves_games_moves",
+				Columns:    []*schema.Column{GameMovesColumns[9]},
+				RefColumns: []*schema.Column{GamesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "gamemove_game_id_ply",
+				Unique:  true,
+				Columns: []*schema.Column{GameMovesColumns[9], GameMovesColumns[3]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -43,11 +110,16 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		GamesTable,
+		GameMovesTable,
 		UsersTable,
 		UserPasswordsTable,
 	}
 )
 
 func init() {
+	GamesTable.ForeignKeys[0].RefTable = UsersTable
+	GamesTable.ForeignKeys[1].RefTable = UsersTable
+	GameMovesTable.ForeignKeys[0].RefTable = GamesTable
 	UserPasswordsTable.ForeignKeys[0].RefTable = UsersTable
 }

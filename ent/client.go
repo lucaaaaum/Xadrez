@@ -11,6 +11,8 @@ import (
 
 	"xadrez/ent/migrate"
 
+	"xadrez/ent/game"
+	"xadrez/ent/gamemove"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -26,6 +28,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Game is the client for interacting with the Game builders.
+	Game *GameClient
+	// GameMove is the client for interacting with the GameMove builders.
+	GameMove *GameMoveClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserPassword is the client for interacting with the UserPassword builders.
@@ -41,6 +47,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Game = NewGameClient(c.config)
+	c.GameMove = NewGameMoveClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserPassword = NewUserPasswordClient(c.config)
 }
@@ -135,6 +143,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:          ctx,
 		config:       cfg,
+		Game:         NewGameClient(cfg),
+		GameMove:     NewGameMoveClient(cfg),
 		User:         NewUserClient(cfg),
 		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
@@ -156,6 +166,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:          ctx,
 		config:       cfg,
+		Game:         NewGameClient(cfg),
+		GameMove:     NewGameMoveClient(cfg),
 		User:         NewUserClient(cfg),
 		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
@@ -164,7 +176,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Game.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -186,6 +198,8 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Game.Use(hooks...)
+	c.GameMove.Use(hooks...)
 	c.User.Use(hooks...)
 	c.UserPassword.Use(hooks...)
 }
@@ -193,6 +207,8 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Game.Intercept(interceptors...)
+	c.GameMove.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 	c.UserPassword.Intercept(interceptors...)
 }
@@ -200,12 +216,346 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *GameMutation:
+		return c.Game.mutate(ctx, m)
+	case *GameMoveMutation:
+		return c.GameMove.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserPasswordMutation:
 		return c.UserPassword.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// GameClient is a client for the Game schema.
+type GameClient struct {
+	config
+}
+
+// NewGameClient returns a client for the Game from the given config.
+func NewGameClient(c config) *GameClient {
+	return &GameClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `game.Hooks(f(g(h())))`.
+func (c *GameClient) Use(hooks ...Hook) {
+	c.hooks.Game = append(c.hooks.Game, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `game.Intercept(f(g(h())))`.
+func (c *GameClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Game = append(c.inters.Game, interceptors...)
+}
+
+// Create returns a builder for creating a Game entity.
+func (c *GameClient) Create() *GameCreate {
+	mutation := newGameMutation(c.config, OpCreate)
+	return &GameCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Game entities.
+func (c *GameClient) CreateBulk(builders ...*GameCreate) *GameCreateBulk {
+	return &GameCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameClient) MapCreateBulk(slice any, setFunc func(*GameCreate, int)) *GameCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameCreateBulk{err: fmt.Errorf("calling to GameClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Game.
+func (c *GameClient) Update() *GameUpdate {
+	mutation := newGameMutation(c.config, OpUpdate)
+	return &GameUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameClient) UpdateOne(_m *Game) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGame(_m))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameClient) UpdateOneID(id uuid.UUID) *GameUpdateOne {
+	mutation := newGameMutation(c.config, OpUpdateOne, withGameID(id))
+	return &GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Game.
+func (c *GameClient) Delete() *GameDelete {
+	mutation := newGameMutation(c.config, OpDelete)
+	return &GameDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameClient) DeleteOne(_m *Game) *GameDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameClient) DeleteOneID(id uuid.UUID) *GameDeleteOne {
+	builder := c.Delete().Where(game.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameDeleteOne{builder}
+}
+
+// Query returns a query builder for Game.
+func (c *GameClient) Query() *GameQuery {
+	return &GameQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGame},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Game entity by its id.
+func (c *GameClient) Get(ctx context.Context, id uuid.UUID) (*Game, error) {
+	return c.Query().Where(game.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameClient) GetX(ctx context.Context, id uuid.UUID) *Game {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWhitePlayer queries the white_player edge of a Game.
+func (c *GameClient) QueryWhitePlayer(_m *Game) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.WhitePlayerTable, game.WhitePlayerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlackPlayer queries the black_player edge of a Game.
+func (c *GameClient) QueryBlackPlayer(_m *Game) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, game.BlackPlayerTable, game.BlackPlayerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMoves queries the moves edge of a Game.
+func (c *GameClient) QueryMoves(_m *Game) *GameMoveQuery {
+	query := (&GameMoveClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(game.Table, game.FieldID, id),
+			sqlgraph.To(gamemove.Table, gamemove.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, game.MovesTable, game.MovesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GameClient) Hooks() []Hook {
+	return c.hooks.Game
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameClient) Interceptors() []Interceptor {
+	return c.inters.Game
+}
+
+func (c *GameClient) mutate(ctx context.Context, m *GameMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Game mutation op: %q", m.Op())
+	}
+}
+
+// GameMoveClient is a client for the GameMove schema.
+type GameMoveClient struct {
+	config
+}
+
+// NewGameMoveClient returns a client for the GameMove from the given config.
+func NewGameMoveClient(c config) *GameMoveClient {
+	return &GameMoveClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gamemove.Hooks(f(g(h())))`.
+func (c *GameMoveClient) Use(hooks ...Hook) {
+	c.hooks.GameMove = append(c.hooks.GameMove, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `gamemove.Intercept(f(g(h())))`.
+func (c *GameMoveClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GameMove = append(c.inters.GameMove, interceptors...)
+}
+
+// Create returns a builder for creating a GameMove entity.
+func (c *GameMoveClient) Create() *GameMoveCreate {
+	mutation := newGameMoveMutation(c.config, OpCreate)
+	return &GameMoveCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GameMove entities.
+func (c *GameMoveClient) CreateBulk(builders ...*GameMoveCreate) *GameMoveCreateBulk {
+	return &GameMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameMoveClient) MapCreateBulk(slice any, setFunc func(*GameMoveCreate, int)) *GameMoveCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameMoveCreateBulk{err: fmt.Errorf("calling to GameMoveClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameMoveCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GameMove.
+func (c *GameMoveClient) Update() *GameMoveUpdate {
+	mutation := newGameMoveMutation(c.config, OpUpdate)
+	return &GameMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameMoveClient) UpdateOne(_m *GameMove) *GameMoveUpdateOne {
+	mutation := newGameMoveMutation(c.config, OpUpdateOne, withGameMove(_m))
+	return &GameMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameMoveClient) UpdateOneID(id uuid.UUID) *GameMoveUpdateOne {
+	mutation := newGameMoveMutation(c.config, OpUpdateOne, withGameMoveID(id))
+	return &GameMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GameMove.
+func (c *GameMoveClient) Delete() *GameMoveDelete {
+	mutation := newGameMoveMutation(c.config, OpDelete)
+	return &GameMoveDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameMoveClient) DeleteOne(_m *GameMove) *GameMoveDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameMoveClient) DeleteOneID(id uuid.UUID) *GameMoveDeleteOne {
+	builder := c.Delete().Where(gamemove.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameMoveDeleteOne{builder}
+}
+
+// Query returns a query builder for GameMove.
+func (c *GameMoveClient) Query() *GameMoveQuery {
+	return &GameMoveQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGameMove},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GameMove entity by its id.
+func (c *GameMoveClient) Get(ctx context.Context, id uuid.UUID) (*GameMove, error) {
+	return c.Query().Where(gamemove.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameMoveClient) GetX(ctx context.Context, id uuid.UUID) *GameMove {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGame queries the game edge of a GameMove.
+func (c *GameMoveClient) QueryGame(_m *GameMove) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gamemove.Table, gamemove.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, gamemove.GameTable, gamemove.GameColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GameMoveClient) Hooks() []Hook {
+	return c.hooks.GameMove
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameMoveClient) Interceptors() []Interceptor {
+	return c.inters.GameMove
+}
+
+func (c *GameMoveClient) mutate(ctx context.Context, m *GameMoveMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameMoveCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameMoveDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GameMove mutation op: %q", m.Op())
 	}
 }
 
@@ -326,6 +676,38 @@ func (c *UserClient) QueryPassword(_m *User) *UserPasswordQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(userpassword.Table, userpassword.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, user.PasswordTable, user.PasswordColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWhiteGames queries the white_games edge of a User.
+func (c *UserClient) QueryWhiteGames(_m *User) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.WhiteGamesTable, user.WhiteGamesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlackGames queries the black_games edge of a User.
+func (c *UserClient) QueryBlackGames(_m *User) *GameQuery {
+	query := (&GameClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(game.Table, game.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.BlackGamesTable, user.BlackGamesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -510,9 +892,9 @@ func (c *UserPasswordClient) mutate(ctx context.Context, m *UserPasswordMutation
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User, UserPassword []ent.Hook
+		Game, GameMove, User, UserPassword []ent.Hook
 	}
 	inters struct {
-		User, UserPassword []ent.Interceptor
+		Game, GameMove, User, UserPassword []ent.Interceptor
 	}
 )

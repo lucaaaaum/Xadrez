@@ -8,6 +8,30 @@ import (
 	"xadrez/ent"
 )
 
+// The GameFunc type is an adapter to allow the use of ordinary
+// function as Game mutator.
+type GameFunc func(context.Context, *ent.GameMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMutation", m)
+}
+
+// The GameMoveFunc type is an adapter to allow the use of ordinary
+// function as GameMove mutator.
+type GameMoveFunc func(context.Context, *ent.GameMoveMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameMoveFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameMoveMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameMoveMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

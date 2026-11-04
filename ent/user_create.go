@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"xadrez/ent/game"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -87,6 +88,36 @@ func (_c *UserCreate) SetNillablePasswordID(id *int) *UserCreate {
 // SetPassword sets the "password" edge to the UserPassword entity.
 func (_c *UserCreate) SetPassword(v *UserPassword) *UserCreate {
 	return _c.SetPasswordID(v.ID)
+}
+
+// AddWhiteGameIDs adds the "white_games" edge to the Game entity by IDs.
+func (_c *UserCreate) AddWhiteGameIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddWhiteGameIDs(ids...)
+	return _c
+}
+
+// AddWhiteGames adds the "white_games" edges to the Game entity.
+func (_c *UserCreate) AddWhiteGames(v ...*Game) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWhiteGameIDs(ids...)
+}
+
+// AddBlackGameIDs adds the "black_games" edge to the Game entity by IDs.
+func (_c *UserCreate) AddBlackGameIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddBlackGameIDs(ids...)
+	return _c
+}
+
+// AddBlackGames adds the "black_games" edges to the Game entity.
+func (_c *UserCreate) AddBlackGames(v ...*Game) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBlackGameIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -210,6 +241,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userpassword.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WhiteGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WhiteGamesTable,
+			Columns: []string{user.WhiteGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.BlackGamesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlackGamesTable,
+			Columns: []string{user.BlackGamesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

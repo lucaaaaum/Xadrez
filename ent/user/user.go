@@ -23,6 +23,10 @@ const (
 	FieldName = "name"
 	// EdgePassword holds the string denoting the password edge name in mutations.
 	EdgePassword = "password"
+	// EdgeWhiteGames holds the string denoting the white_games edge name in mutations.
+	EdgeWhiteGames = "white_games"
+	// EdgeBlackGames holds the string denoting the black_games edge name in mutations.
+	EdgeBlackGames = "black_games"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PasswordTable is the table that holds the password relation/edge.
@@ -32,6 +36,20 @@ const (
 	PasswordInverseTable = "user_passwords"
 	// PasswordColumn is the table column denoting the password relation/edge.
 	PasswordColumn = "user_id"
+	// WhiteGamesTable is the table that holds the white_games relation/edge.
+	WhiteGamesTable = "games"
+	// WhiteGamesInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	WhiteGamesInverseTable = "games"
+	// WhiteGamesColumn is the table column denoting the white_games relation/edge.
+	WhiteGamesColumn = "white_player_id"
+	// BlackGamesTable is the table that holds the black_games relation/edge.
+	BlackGamesTable = "games"
+	// BlackGamesInverseTable is the table name for the Game entity.
+	// It exists in this package in order to avoid circular dependency with the "game" package.
+	BlackGamesInverseTable = "games"
+	// BlackGamesColumn is the table column denoting the black_games relation/edge.
+	BlackGamesColumn = "black_player_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -94,10 +112,52 @@ func ByPasswordField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPasswordStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByWhiteGamesCount orders the results by white_games count.
+func ByWhiteGamesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWhiteGamesStep(), opts...)
+	}
+}
+
+// ByWhiteGames orders the results by white_games terms.
+func ByWhiteGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWhiteGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBlackGamesCount orders the results by black_games count.
+func ByBlackGamesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBlackGamesStep(), opts...)
+	}
+}
+
+// ByBlackGames orders the results by black_games terms.
+func ByBlackGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBlackGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPasswordStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PasswordInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, PasswordTable, PasswordColumn),
+	)
+}
+func newWhiteGamesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WhiteGamesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WhiteGamesTable, WhiteGamesColumn),
+	)
+}
+func newBlackGamesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BlackGamesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BlackGamesTable, BlackGamesColumn),
 	)
 }

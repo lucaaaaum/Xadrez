@@ -35,9 +35,13 @@ type User struct {
 type UserEdges struct {
 	// Password holds the value of the password edge.
 	Password *UserPassword `json:"password,omitempty"`
+	// WhiteGames holds the value of the white_games edge.
+	WhiteGames []*Game `json:"white_games,omitempty"`
+	// BlackGames holds the value of the black_games edge.
+	BlackGames []*Game `json:"black_games,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // PasswordOrErr returns the Password value or an error if the edge
@@ -49,6 +53,24 @@ func (e UserEdges) PasswordOrErr() (*UserPassword, error) {
 		return nil, &NotFoundError{label: userpassword.Label}
 	}
 	return nil, &NotLoadedError{edge: "password"}
+}
+
+// WhiteGamesOrErr returns the WhiteGames value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) WhiteGamesOrErr() ([]*Game, error) {
+	if e.loadedTypes[1] {
+		return e.WhiteGames, nil
+	}
+	return nil, &NotLoadedError{edge: "white_games"}
+}
+
+// BlackGamesOrErr returns the BlackGames value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) BlackGamesOrErr() ([]*Game, error) {
+	if e.loadedTypes[2] {
+		return e.BlackGames, nil
+	}
+	return nil, &NotLoadedError{edge: "black_games"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -117,6 +139,16 @@ func (_m *User) Value(name string) (ent.Value, error) {
 // QueryPassword queries the "password" edge of the User entity.
 func (_m *User) QueryPassword() *UserPasswordQuery {
 	return NewUserClient(_m.config).QueryPassword(_m)
+}
+
+// QueryWhiteGames queries the "white_games" edge of the User entity.
+func (_m *User) QueryWhiteGames() *GameQuery {
+	return NewUserClient(_m.config).QueryWhiteGames(_m)
+}
+
+// QueryBlackGames queries the "black_games" edge of the User entity.
+func (_m *User) QueryBlackGames() *GameQuery {
+	return NewUserClient(_m.config).QueryBlackGames(_m)
 }
 
 // Update returns a builder for updating this User.
