@@ -56,6 +56,7 @@ func (m *HandlerManager) RegisterHandler[T any](messageType string, handleFunc f
 		typedMessage.Id = message.Id
 		typedMessage.Type = message.Type
 		if err := json.Unmarshal(message.Payload, &typedMessage.Payload); err != nil {
+			log.Warn("falha ao desserializar payload", "tipo", message.Type, "erro", err)
 			return NewClientError("payload inválido para o tipo de mensagem %q", message.Type)
 		}
 		return handleFunc(ctx, typedMessage)
@@ -66,6 +67,7 @@ func (m *HandlerManager) RegisterRequestHandler[Req, Res any](messageType string
 	m.RegisterHandler(messageType, func(ctx context.Context, message Message[Req]) error {
 		response, err := handleFunc(ctx, message.Payload)
 		if err != nil {
+			log.Warn("falha ao processar requisição", "tipo", messageType, "erro", err)
 			return err
 		}
 		return peerFrom(ctx).Reply(message.Id, messageType+"_ok", response)
@@ -75,12 +77,14 @@ func (m *HandlerManager) RegisterRequestHandler[Req, Res any](messageType string
 func (m *HandlerManager) HandleMessage(peer *Peer, jsonPayload []byte) {
 	var rawMessage RawMessage
 	if err := json.Unmarshal(jsonPayload, &rawMessage); err != nil {
+		log.Warn("falha ao desserializar mensagem", "cliente", peer.RemoteAddr(), "erro", err)
 		peer.replyError("", NewClientError("mensagem malformada"))
 		return
 	}
 
 	handler, ok := m.handlers[rawMessage.Type]
 	if !ok {
+		log.Warn("tipo de mensagem desconhecido", "cliente", peer.RemoteAddr(), "tipo", rawMessage.Type)
 		peer.replyError(rawMessage.Id, NewClientError("tipo de mensagem desconhecido: %q", rawMessage.Type))
 		return
 	}

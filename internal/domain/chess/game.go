@@ -27,6 +27,18 @@ type piece struct {
 	y     int
 }
 
+func (p *piece) GetKind() PieceKind {
+	return p.kind
+}
+
+func (p *piece) GetColor() PieceColor {
+	return p.color
+}
+
+func (p *piece) GetPosition() (int, int) {
+	return p.x, p.y
+}
+
 func newPiece(kind PieceKind, color PieceColor) *piece {
 	return &piece{
 		kind:  kind,
@@ -95,11 +107,13 @@ func newBoard() *board {
 }
 
 type Game struct {
+	ID    string
 	board *board
 }
 
-func NewGame() *Game {
+func NewGame(name string) *Game {
 	return &Game{
+		ID:    name,
 		board: newBoard(),
 	}
 }
@@ -157,4 +171,8 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func (g *Game) GetBoard() []*piece {
+	return g.board.pieces
 }
