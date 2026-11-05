@@ -17,7 +17,7 @@ func NewChessHandler(gameService chess.GameService) *ChessHandler {
 }
 
 func (h *ChessHandler) HandleCreateGameRequest(ctx context.Context, request messages.CreateGameRequest) (messages.CreateGameResponse, error) {
-	_, err := h.gameService.CreateGame(request.Name)
+	_, err := h.gameService.CreateGame(ctx, request.Name)
 	if err != nil {
 		return messages.CreateGameResponse{}, err
 	}
@@ -26,7 +26,7 @@ func (h *ChessHandler) HandleCreateGameRequest(ctx context.Context, request mess
 }
 
 func (h *ChessHandler) HandleListGamesRequest(ctx context.Context, request messages.ListGamesRequest) (messages.ListGamesResponse, error) {
-	games, err := h.gameService.ListGames()
+	games, err := h.gameService.ListGames(ctx)
 	if err != nil {
 		return messages.ListGamesResponse{}, err
 	}
@@ -42,7 +42,7 @@ func (h *ChessHandler) HandleListGamesRequest(ctx context.Context, request messa
 }
 
 func (h *ChessHandler) HandleGetBoardRequest(ctx context.Context, request messages.GetBoardRequest) (messages.BoardResponse, error) {
-	game, err := h.gameService.GetGame(request.GameName)
+	game, err := h.gameService.GetGame(ctx, request.GameName)
 	if err != nil {
 		return messages.BoardResponse{}, err
 	}
@@ -69,7 +69,7 @@ func getBoardResponseFromGame(game *chess.Game) messages.BoardResponse {
 }
 
 func (h *ChessHandler) HandleMakeMoveRequest(ctx context.Context, request messages.MoveRequest) (messages.BoardResponse, error) {
-	game, err := h.gameService.GetGame(request.GameName)
+	game, err := h.gameService.GetGame(ctx, request.GameName)
 	if err != nil {
 		return messages.BoardResponse{}, err
 	}
@@ -83,7 +83,7 @@ func (h *ChessHandler) HandleMakeMoveRequest(ctx context.Context, request messag
 }
 
 func (h *ChessHandler) HandleValidateMoveRequest(ctx context.Context, request messages.ValidateMoveRequest) error {
-	game, err := h.gameService.GetGame(request.GameName)
+	game, err := h.gameService.GetGame(ctx, request.GameName)
 	if err != nil {
 		return err
 	}

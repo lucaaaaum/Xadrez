@@ -1,7 +1,9 @@
 package chess
 
+import "context"
+
 type GameService interface {
-	CreateGame(name string) (*Game, error)
-	ListGames() (map[string]*Game, error)
-	GetGame(id string) (*Game, error)
+	CreateGame(ctx context.Context, name string) (*Game, error)
+	ListGames(ctx context.Context) (map[string]*Game, error)
+	GetGame(ctx context.Context, id string) (*Game, error)
 }
