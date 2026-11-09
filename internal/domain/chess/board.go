@@ -1,6 +1,6 @@
 package chess
 
-import "fmt"
+import "xadrez/internal/domain"
 
 type board struct {
 	pieces [8][8]*piece
@@ -52,21 +52,21 @@ func (b *board) removePiece(x, y int) {
 
 func (b *board) Move(fromX, fromY, toX, toY int) error {
 	if fromX < 0 || fromX >= 8 || fromY < 0 || fromY >= 8 || toX < 0 || toX >= 8 || toY < 0 || toY >= 8 {
-		return fmt.Errorf("invalid board coordinates")
+		return domain.NewError("coordenadas fora do tabuleiro")
 	}
 
 	p := b.getPieceAt(fromX, fromY)
 	if p == nil {
-		return fmt.Errorf("no piece at (%d, %d)", fromX, fromY)
+		return domain.NewError("não há peça em (%d, %d)", fromX, fromY)
 	}
 
 	if !canMove(p, fromX, fromY, toX, toY) {
-		return fmt.Errorf("invalid move for piece %v at (%d, %d)", p.kind, fromX, fromY)
+		return domain.NewError("movimento inválido para a peça em (%d, %d)", fromX, fromY)
 	}
 
 	target := b.getPieceAt(toX, toY)
 	if target != nil && target.color == p.color {
-		return fmt.Errorf("cannot capture own piece at (%d, %d)", toX, toY)
+		return domain.NewError("não é possível capturar a própria peça em (%d, %d)", toX, toY)
 	}
 
 	b.removePiece(fromX, fromY)

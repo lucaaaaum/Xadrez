@@ -18,6 +18,13 @@ const (
 	Black
 )
 
+func (c PieceColor) String() string {
+	if c == White {
+		return "brancas"
+	}
+	return "pretas"
+}
+
 type piece struct {
 	kind  PieceKind
 	color PieceColor
