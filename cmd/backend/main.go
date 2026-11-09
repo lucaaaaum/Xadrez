@@ -21,7 +21,7 @@ type Services struct {
 	loginService auth.LoginService
 	userService  users.UserService
 	roomService  rooms.RoomService
-	gameService  chess.GameService
+	matchService chess.MatchService
 }
 
 func newServices(client *ent.Client) Services {
@@ -30,7 +30,7 @@ func newServices(client *ent.Client) Services {
 		loginService: infra.NewAuthService(client),
 		userService:  infra.NewUserService(client),
 		roomService:  roomService,
-		gameService:  infra.NewInMemoryGameService(),
+		matchService: infra.NewMatchService(client, roomService),
 	}
 }
 
@@ -49,11 +49,10 @@ func registerHandlers(handlerManager *tcp.HandlerManager, services Services, not
 	handlerManager.RegisterRequestHandler("list_rooms", roomHandler.HandleListRooms)
 	handlerManager.RegisterRequestHandler("invite_to_room", roomHandler.HandleInviteToRoom)
 
-	chessHandler := handlers.NewChessHandler(services.gameService)
-	handlerManager.RegisterRequestHandler("create_game", chessHandler.HandleCreateGameRequest)
-	handlerManager.RegisterRequestHandler("list_games", chessHandler.HandleListGamesRequest)
-	handlerManager.RegisterRequestHandler("get_board", chessHandler.HandleGetBoardRequest)
-	handlerManager.RegisterRequestHandler("make_move", chessHandler.HandleMakeMoveRequest)
+	matchHandler := handlers.NewMatchHandler(services.matchService)
+	handlerManager.RegisterRequestHandler("start_match", matchHandler.HandleStartMatch)
+	handlerManager.RegisterRequestHandler("get_match", matchHandler.HandleGetMatch)
+	handlerManager.RegisterRequestHandler("make_move", matchHandler.HandleMakeMove)
 
 }
 

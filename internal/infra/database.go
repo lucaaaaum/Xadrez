@@ -17,6 +17,7 @@ func OpenDatabase(ctx context.Context, dsn string) (*ent.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("falha ao abrir o banco de dados: %w", err)
 	}
+	db.SetMaxOpenConns(1)
 	if err := db.PingContext(ctx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("falha ao conectar ao banco de dados: %w", err)
