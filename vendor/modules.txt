@@ -71,6 +71,21 @@ github.com/clipperhouse/uax29/v2/graphemes
 # github.com/dustin/go-humanize v1.1.0
 ## explicit; go 1.21
 github.com/dustin/go-humanize
+# github.com/ebitengine/purego v0.11.3
+## explicit; go 1.25.0
+github.com/ebitengine/purego
+github.com/ebitengine/purego/internal/cgo
+github.com/ebitengine/purego/internal/fakecgo
+github.com/ebitengine/purego/internal/strings
+# github.com/gen2brain/raylib-go/raylib v0.60.1
+## explicit; go 1.21
+github.com/gen2brain/raylib-go/raylib
+github.com/gen2brain/raylib-go/raylib/external
+github.com/gen2brain/raylib-go/raylib/external/android/native_app_glue
+github.com/gen2brain/raylib-go/raylib/external/glfw/include/GLFW
+github.com/gen2brain/raylib-go/raylib/external/glfw/src
+github.com/gen2brain/raylib-go/raylib/internal/convert
+github.com/gen2brain/raylib-go/raylib/platforms
 # github.com/go-logfmt/logfmt v0.6.1
 ## explicit; go 1.21
 github.com/go-logfmt/logfmt
@@ -97,6 +112,9 @@ github.com/hashicorp/hcl/v2/hclparse
 github.com/hashicorp/hcl/v2/hclsyntax
 github.com/hashicorp/hcl/v2/hclwrite
 github.com/hashicorp/hcl/v2/json
+# github.com/jupiterrider/ffi v0.8.0
+## explicit; go 1.18
+github.com/jupiterrider/ffi
 # github.com/lucasb-eyer/go-colorful v1.4.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
@@ -143,9 +161,8 @@ github.com/zclconf/go-cty-yaml
 ## explicit; go 1.26.0
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
-# golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-## explicit; go 1.20
-golang.org/x/exp/constraints
+# golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920
+## explicit; go 1.26.0
 golang.org/x/exp/slices
 golang.org/x/exp/slog
 golang.org/x/exp/slog/internal
