@@ -25,7 +25,7 @@ type Services struct {
 func newServices(client *ent.Client) Services {
 	return Services{
 		loginService: infra.NewAuthService(client),
-		userService:  infra.NewInMemoryUserService(),
+		userService:  infra.NewUserService(client),
 		gameService:  infra.NewInMemoryGameService(),
 	}
 }
@@ -33,8 +33,9 @@ func newServices(client *ent.Client) Services {
 func newHandlerManager(services Services) *tcp.HandlerManager {
 	handlerManager := tcp.NewHandlerManager()
 
-	authHandler := handlers.NewAuthHandler(services.loginService)
+	authHandler := handlers.NewAuthHandler(services.loginService, services.userService)
 	handlerManager.RegisterRequestHandler("login", authHandler.HandleLogin)
+	handlerManager.RegisterDisconnectHandler(authHandler.HandleDisconnect)
 
 	chessHandler := handlers.NewChessHandler(services.gameService)
 	handlerManager.RegisterRequestHandler("create_game", chessHandler.HandleCreateGameRequest)

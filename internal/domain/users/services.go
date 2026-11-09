@@ -1,6 +1,11 @@
 package users
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var ErrAlreadyOnline = errors.New("o usuário já está logado")
 
 type User struct {
 	Name string
