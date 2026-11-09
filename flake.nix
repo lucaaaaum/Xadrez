@@ -6,10 +6,18 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; };
-      in {
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+      in
+      {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             go_1_27
@@ -17,7 +25,20 @@
             gotools
             netcat-openbsd
             ent-go
+            wireshark
+
+            wayland
+
+            libxkbcommon
+            libX11
+            libXcursor
+            libXrandr
+            libXinerama
+            libXi
+
+            libGL
           ];
         };
-      });
+      }
+    );
 }
