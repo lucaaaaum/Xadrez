@@ -18,6 +18,13 @@ const (
 	Black
 )
 
+func (c PieceColor) Opponent() PieceColor {
+	if c == White {
+		return Black
+	}
+	return White
+}
+
 func (c PieceColor) String() string {
 	if c == White {
 		return "brancas"

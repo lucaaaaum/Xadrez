@@ -144,7 +144,7 @@ func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fr
 	if !ok {
 		return chess.Match{}, rollback(tx, domain.NewError("o usuário %s não é jogador da partida na sala %s", player, roomName))
 	}
-	if err := loaded.game.MakeMove(color, fromX, fromY, toX, toY); err != nil {
+	if err := loaded.game.MakeMove(color, fromX, fromY, toX, toY, chess.Pawn); err != nil {
 		return chess.Match{}, rollback(tx, err)
 	}
 
@@ -186,7 +186,7 @@ func loadOngoingMatch(ctx context.Context, client *ent.Client, roomName string) 
 
 	game := chess.NewGame()
 	for _, move := range record.Edges.Moves {
-		if err := game.MakeMove(game.CurrentTurn(), move.FromX, move.FromY, move.ToX, move.ToY); err != nil {
+		if err := game.MakeMove(game.CurrentTurn(), move.FromX, move.FromY, move.ToX, move.ToY, chess.Pawn); err != nil {
 			return nil, fmt.Errorf("lance %d inválido no histórico da partida: %w", move.Ply, err)
 		}
 	}
