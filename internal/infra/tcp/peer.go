@@ -14,6 +14,7 @@ import (
 )
 
 var ErrPeerClosed = errors.New("a conexão foi encerrada")
+var ErrUserNotConnected = errors.New("o usuário não está conectado")
 
 const flushTimeout = time.Second
 
@@ -135,4 +136,10 @@ func (p *Peer) Close() {
 
 func (p *Peer) Done() <-chan struct{} {
 	return p.done
+}
+
+func (p *Peer) currentUser() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.user
 }

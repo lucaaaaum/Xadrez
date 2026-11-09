@@ -78,3 +78,28 @@ func (s *TCPServer) remove(peer *Peer) {
 	delete(s.clients, peer)
 	log.Info("cliente desconectado", "cliente", peer.RemoteAddr())
 }
+
+func (s *TCPServer) SendToUser(user, messageType string, payload any) error {
+	s.mu.Lock()
+	clients := make([]*Peer, 0, len(s.clients))
+	for client := range s.clients {
+		clients = append(clients, client)
+	}
+	s.mu.Unlock()
+
+	sent := false
+	for _, client := range clients {
+		if client.currentUser() != user {
+			continue
+		}
+		if err := client.SendMessage(messageType, payload); err != nil {
+			log.Error("erro ao enviar mensagem ao usuário", "usuário", user, "erro", err)
+			continue
+		}
+		sent = true
+	}
+	if !sent {
+		return ErrUserNotConnected
+	}
+	return nil
+}
