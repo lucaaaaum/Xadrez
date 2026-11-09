@@ -58,6 +58,7 @@ func (p *Peer) Run() {
 			log.Error("erro ao ler mensagem", "conexão", p.RemoteAddr(), "erro", err)
 		}
 	}
+	p.handlerManager.HandleDisconnect(p)
 }
 
 func (p *Peer) writeLoop() {

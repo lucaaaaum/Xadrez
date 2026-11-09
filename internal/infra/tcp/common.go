@@ -40,7 +40,8 @@ func NewClientError(format string, args ...any) *ClientError {
 }
 
 type HandlerManager struct {
-	handlers map[string]func(ctx context.Context, message RawMessage) error
+	handlers           map[string]func(ctx context.Context, message RawMessage) error
+	disconnectHandlers []func(ctx context.Context)
 }
 
 func NewHandlerManager() *HandlerManager {
@@ -72,6 +73,16 @@ func (m *HandlerManager) RegisterRequestHandler[Req, Res any](messageType string
 		}
 		return peerFrom(ctx).Reply(message.Id, messageType+"_ok", response)
 	})
+}
+
+func (m *HandlerManager) RegisterDisconnectHandler(handleFunc func(ctx context.Context)) {
+	m.disconnectHandlers = append(m.disconnectHandlers, handleFunc)
+}
+
+func (m *HandlerManager) HandleDisconnect(peer *Peer) {
+	for _, handleFunc := range m.disconnectHandlers {
+		handleFunc(peer.ctx)
+	}
 }
 
 func (m *HandlerManager) HandleMessage(peer *Peer, jsonPayload []byte) {
