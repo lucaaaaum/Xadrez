@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"xadrez/internal/domain"
 
 	"charm.land/log/v2"
 )
@@ -107,7 +108,10 @@ func (m *HandlerManager) HandleMessage(peer *Peer, jsonPayload []byte) {
 
 func (p *Peer) replyError(id string, err error) {
 	var clientError *ClientError
-	if !errors.As(err, &clientError) {
+	var domainError *domain.Error
+	if errors.As(err, &domainError) {
+		clientError = NewClientError("%s", domainError.Message)
+	} else if !errors.As(err, &clientError) {
 		log.Error("erro ao processar mensagem", "cliente", p.RemoteAddr(), "id", id, "erro", err)
 		clientError = NewClientError("erro interno do servidor")
 	}
