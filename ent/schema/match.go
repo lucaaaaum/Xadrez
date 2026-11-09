@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"regexp"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
@@ -10,24 +8,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// Game holds the schema definition for the Game entity.
-type Game struct {
+type Match struct {
 	ent.Schema
 }
 
-func (Game) Mixin() []ent.Mixin {
+func (Match) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
 	}
 }
 
-// Fields of the Game.
-func (Game) Fields() []ent.Field {
+func (Match) Fields() []ent.Field {
 	return []ent.Field{
-		varchar(field.String("name"), 255).Match(regexp.MustCompile(`^[a-z0-9][a-z0-9_-]*$`)).Unique().Immutable(),
-		field.Enum("status").Values("active", "inactive").Default("active"),
-		field.UUID("white_player_id", uuid.UUID{}).Immutable(),
-		field.UUID("black_player_id", uuid.UUID{}).Immutable(),
+		field.UUID("room_id", uuid.UUID{}).Immutable(),
+		field.UUID("white_participant_id", uuid.UUID{}).Immutable(),
+		field.UUID("black_participant_id", uuid.UUID{}).Immutable(),
 		field.Enum("result").Values("white", "black", "draw").Optional().Nillable(),
 		field.Enum("termination").
 			Values(
@@ -45,22 +40,27 @@ func (Game) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Game.
-func (Game) Edges() []ent.Edge {
+func (Match) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("white_player", User.Type).
-			Ref("white_games").
-			Field("white_player_id").
+		edge.From("room", GameRoom.Type).
+			Ref("matches").
+			Field("room_id").
 			Unique().
 			Required().
 			Immutable(),
-		edge.From("black_player", User.Type).
-			Ref("black_games").
-			Field("black_player_id").
+		edge.From("white_player", Participant.Type).
+			Ref("white_matches").
+			Field("white_participant_id").
 			Unique().
 			Required().
 			Immutable(),
-		edge.To("moves", GameMove.Type).
+		edge.From("black_player", Participant.Type).
+			Ref("black_matches").
+			Field("black_participant_id").
+			Unique().
+			Required().
+			Immutable(),
+		edge.To("moves", MatchMove.Type).
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }

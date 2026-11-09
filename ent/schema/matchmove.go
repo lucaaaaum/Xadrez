@@ -8,21 +8,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// GameMove holds the schema definition for the GameMove entity.
-type GameMove struct {
+// MatchMove holds the schema definition for the MatchMove entity.
+type MatchMove struct {
 	ent.Schema
 }
 
-func (GameMove) Mixin() []ent.Mixin {
+func (MatchMove) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		BaseMixin{},
 	}
 }
 
-// Fields of the GameMove.
-func (GameMove) Fields() []ent.Field {
+// Fields of the MatchMove.
+func (MatchMove) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("game_id", uuid.UUID{}).Immutable(),
+		field.UUID("match_id", uuid.UUID{}).Immutable(),
 		field.Int("ply").Positive().Immutable(),
 		field.Int("from_x").Range(0, 7).Immutable(),
 		field.Int("from_y").Range(0, 7).Immutable(),
@@ -32,21 +32,21 @@ func (GameMove) Fields() []ent.Field {
 	}
 }
 
-// Edges of the GameMove.
-func (GameMove) Edges() []ent.Edge {
+// Edges of the MatchMove.
+func (MatchMove) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("game", Game.Type).
+		edge.From("match", Match.Type).
 			Ref("moves").
-			Field("game_id").
+			Field("match_id").
 			Unique().
 			Required().
 			Immutable(),
 	}
 }
 
-// Indexes of the GameMove.
-func (GameMove) Indexes() []ent.Index {
+// Indexes of the MatchMove.
+func (MatchMove) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("game_id", "ply").Unique(),
+		index.Fields("match_id", "ply").Unique(),
 	}
 }
