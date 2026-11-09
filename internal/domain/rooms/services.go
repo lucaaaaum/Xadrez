@@ -17,6 +17,7 @@ type Invite struct {
 type RoomService interface {
 	CreateRoom(ctx context.Context, name, admin string) (Room, error)
 	JoinRoom(ctx context.Context, name, user string) (Room, error)
+	GetRoom(ctx context.Context, name string) (Room, error)
 	ListRooms(ctx context.Context) ([]Room, error)
 	InviteToRoom(ctx context.Context, name, admin, invitee string) (Invite, error)
 }
