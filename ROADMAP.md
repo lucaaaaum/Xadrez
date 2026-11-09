@@ -52,6 +52,20 @@
 
 ## Partidas
 
+### Salas
+
+- [x] Sala (`GameRoom`) com administrador e participantes, separada das partidas (`Match`).
+- [x] Partida com referência aos participantes branco e preto, e lances ligados à partida.
+- [ ] Criador da sala definido como administrador.
+- [ ] Entrar numa sala como espectador.
+- [ ] Sair da sala.
+- [ ] Administrador escolhe os jogadores branco e preto e inicia a partida.
+- [ ] Uma partida por vez na sala.
+- [ ] Nova partida na mesma sala após o fim da anterior.
+- [ ] Administrador bane um participante.
+- [ ] Banido impedido de entrar de novo.
+- [ ] Transferência de administrador quando ele sai.
+
 ### Convites
 
 - [ ] Criar partida e convidar um usuário online.
@@ -107,6 +121,8 @@
 ## Opcionais
 
 - [ ] Ranking público por vitórias e empates.
+- [ ] Jogadores sorteados de uma fila da sala.
+- [ ] Partidas paralelas na mesma sala.
 - [ ] Bot gerenciado pelo servidor.
 - [ ] Reconexão a uma partida em andamento.
 - [ ] Painel de administração em tempo real.
