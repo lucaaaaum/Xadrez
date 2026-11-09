@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 )
 
-// GameMove is the model entity for the GameMove schema.
-type GameMove struct {
+// MatchMove is the model entity for the MatchMove schema.
+type MatchMove struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
@@ -23,8 +23,8 @@ type GameMove struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// GameID holds the value of the "game_id" field.
-	GameID uuid.UUID `json:"game_id,omitempty"`
+	// MatchID holds the value of the "match_id" field.
+	MatchID uuid.UUID `json:"match_id,omitempty"`
 	// Ply holds the value of the "ply" field.
 	Ply int `json:"ply,omitempty"`
 	// FromX holds the value of the "from_x" field.
@@ -36,45 +36,45 @@ type GameMove struct {
 	// ToY holds the value of the "to_y" field.
 	ToY int `json:"to_y,omitempty"`
 	// Promotion holds the value of the "promotion" field.
-	Promotion *gamemove.Promotion `json:"promotion,omitempty"`
+	Promotion *matchmove.Promotion `json:"promotion,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the GameMoveQuery when eager-loading is set.
-	Edges        GameMoveEdges `json:"edges"`
+	// The values are being populated by the MatchMoveQuery when eager-loading is set.
+	Edges        MatchMoveEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// GameMoveEdges holds the relations/edges for other nodes in the graph.
-type GameMoveEdges struct {
-	// Game holds the value of the game edge.
-	Game *Game `json:"game,omitempty"`
+// MatchMoveEdges holds the relations/edges for other nodes in the graph.
+type MatchMoveEdges struct {
+	// Match holds the value of the match edge.
+	Match *Match `json:"match,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// GameOrErr returns the Game value or an error if the edge
+// MatchOrErr returns the Match value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e GameMoveEdges) GameOrErr() (*Game, error) {
-	if e.Game != nil {
-		return e.Game, nil
+func (e MatchMoveEdges) MatchOrErr() (*Match, error) {
+	if e.Match != nil {
+		return e.Match, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: game.Label}
+		return nil, &NotFoundError{label: match.Label}
 	}
-	return nil, &NotLoadedError{edge: "game"}
+	return nil, &NotLoadedError{edge: "match"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*GameMove) scanValues(columns []string) ([]any, error) {
+func (*MatchMove) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case gamemove.FieldPly, gamemove.FieldFromX, gamemove.FieldFromY, gamemove.FieldToX, gamemove.FieldToY:
+		case matchmove.FieldPly, matchmove.FieldFromX, matchmove.FieldFromY, matchmove.FieldToX, matchmove.FieldToY:
 			values[i] = new(sql.NullInt64)
-		case gamemove.FieldPromotion:
+		case matchmove.FieldPromotion:
 			values[i] = new(sql.NullString)
-		case gamemove.FieldCreatedAt, gamemove.FieldUpdatedAt:
+		case matchmove.FieldCreatedAt, matchmove.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case gamemove.FieldID, gamemove.FieldGameID:
+		case matchmove.FieldID, matchmove.FieldMatchID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -84,73 +84,73 @@ func (*GameMove) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the GameMove fields.
-func (_m *GameMove) assignValues(columns []string, values []any) error {
+// to the MatchMove fields.
+func (_m *MatchMove) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case gamemove.FieldID:
+		case matchmove.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case gamemove.FieldCreatedAt:
+		case matchmove.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case gamemove.FieldUpdatedAt:
+		case matchmove.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case gamemove.FieldGameID:
+		case matchmove.FieldMatchID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field game_id", values[i])
+				return fmt.Errorf("unexpected type %T for field match_id", values[i])
 			} else if value != nil {
-				_m.GameID = *value
+				_m.MatchID = *value
 			}
-		case gamemove.FieldPly:
+		case matchmove.FieldPly:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field ply", values[i])
 			} else if value.Valid {
 				_m.Ply = int(value.Int64)
 			}
-		case gamemove.FieldFromX:
+		case matchmove.FieldFromX:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field from_x", values[i])
 			} else if value.Valid {
 				_m.FromX = int(value.Int64)
 			}
-		case gamemove.FieldFromY:
+		case matchmove.FieldFromY:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field from_y", values[i])
 			} else if value.Valid {
 				_m.FromY = int(value.Int64)
 			}
-		case gamemove.FieldToX:
+		case matchmove.FieldToX:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field to_x", values[i])
 			} else if value.Valid {
 				_m.ToX = int(value.Int64)
 			}
-		case gamemove.FieldToY:
+		case matchmove.FieldToY:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field to_y", values[i])
 			} else if value.Valid {
 				_m.ToY = int(value.Int64)
 			}
-		case gamemove.FieldPromotion:
+		case matchmove.FieldPromotion:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field promotion", values[i])
 			} else if value.Valid {
-				_m.Promotion = new(gamemove.Promotion)
-				*_m.Promotion = gamemove.Promotion(value.String)
+				_m.Promotion = new(matchmove.Promotion)
+				*_m.Promotion = matchmove.Promotion(value.String)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -159,39 +159,39 @@ func (_m *GameMove) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the GameMove.
+// Value returns the ent.Value that was dynamically selected and assigned to the MatchMove.
 // This includes values selected through modifiers, order, etc.
-func (_m *GameMove) Value(name string) (ent.Value, error) {
+func (_m *MatchMove) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryGame queries the "game" edge of the GameMove entity.
-func (_m *GameMove) QueryGame() *GameQuery {
-	return NewGameMoveClient(_m.config).QueryGame(_m)
+// QueryMatch queries the "match" edge of the MatchMove entity.
+func (_m *MatchMove) QueryMatch() *MatchQuery {
+	return NewMatchMoveClient(_m.config).QueryMatch(_m)
 }
 
-// Update returns a builder for updating this GameMove.
-// Note that you need to call GameMove.Unwrap() before calling this method if this GameMove
+// Update returns a builder for updating this MatchMove.
+// Note that you need to call MatchMove.Unwrap() before calling this method if this MatchMove
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *GameMove) Update() *GameMoveUpdateOne {
-	return NewGameMoveClient(_m.config).UpdateOne(_m)
+func (_m *MatchMove) Update() *MatchMoveUpdateOne {
+	return NewMatchMoveClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the GameMove entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the MatchMove entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *GameMove) Unwrap() *GameMove {
+func (_m *MatchMove) Unwrap() *MatchMove {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: GameMove is not a transactional entity")
+		panic("ent: MatchMove is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *GameMove) String() string {
+func (_m *MatchMove) String() string {
 	var builder strings.Builder
-	builder.WriteString("GameMove(")
+	builder.WriteString("MatchMove(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -199,8 +199,8 @@ func (_m *GameMove) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("game_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.GameID))
+	builder.WriteString("match_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.MatchID))
 	builder.WriteString(", ")
 	builder.WriteString("ply=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Ply))
@@ -225,5 +225,5 @@ func (_m *GameMove) String() string {
 	return builder.String()
 }
 
-// GameMoves is a parsable slice of GameMove.
-type GameMoves []*GameMove
+// MatchMoves is a parsable slice of MatchMove.
+type MatchMoves []*MatchMove

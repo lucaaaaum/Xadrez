@@ -7,7 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"xadrez/ent/game"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/participant"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -90,34 +91,34 @@ func (_c *UserCreate) SetPassword(v *UserPassword) *UserCreate {
 	return _c.SetPasswordID(v.ID)
 }
 
-// AddWhiteGameIDs adds the "white_games" edge to the Game entity by IDs.
-func (_c *UserCreate) AddWhiteGameIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddWhiteGameIDs(ids...)
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_c *UserCreate) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddAdministeredRoomIDs(ids...)
 	return _c
 }
 
-// AddWhiteGames adds the "white_games" edges to the Game entity.
-func (_c *UserCreate) AddWhiteGames(v ...*Game) *UserCreate {
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_c *UserCreate) AddAdministeredRooms(v ...*GameRoom) *UserCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddWhiteGameIDs(ids...)
+	return _c.AddAdministeredRoomIDs(ids...)
 }
 
-// AddBlackGameIDs adds the "black_games" edge to the Game entity by IDs.
-func (_c *UserCreate) AddBlackGameIDs(ids ...uuid.UUID) *UserCreate {
-	_c.mutation.AddBlackGameIDs(ids...)
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_c *UserCreate) AddParticipationIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddParticipationIDs(ids...)
 	return _c
 }
 
-// AddBlackGames adds the "black_games" edges to the Game entity.
-func (_c *UserCreate) AddBlackGames(v ...*Game) *UserCreate {
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_c *UserCreate) AddParticipations(v ...*Participant) *UserCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddBlackGameIDs(ids...)
+	return _c.AddParticipationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -248,15 +249,15 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.WhiteGamesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -264,15 +265,15 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.BlackGamesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.ParticipationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

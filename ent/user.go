@@ -35,10 +35,10 @@ type User struct {
 type UserEdges struct {
 	// Password holds the value of the password edge.
 	Password *UserPassword `json:"password,omitempty"`
-	// WhiteGames holds the value of the white_games edge.
-	WhiteGames []*Game `json:"white_games,omitempty"`
-	// BlackGames holds the value of the black_games edge.
-	BlackGames []*Game `json:"black_games,omitempty"`
+	// AdministeredRooms holds the value of the administered_rooms edge.
+	AdministeredRooms []*GameRoom `json:"administered_rooms,omitempty"`
+	// Participations holds the value of the participations edge.
+	Participations []*Participant `json:"participations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
@@ -55,22 +55,22 @@ func (e UserEdges) PasswordOrErr() (*UserPassword, error) {
 	return nil, &NotLoadedError{edge: "password"}
 }
 
-// WhiteGamesOrErr returns the WhiteGames value or an error if the edge
+// AdministeredRoomsOrErr returns the AdministeredRooms value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) WhiteGamesOrErr() ([]*Game, error) {
+func (e UserEdges) AdministeredRoomsOrErr() ([]*GameRoom, error) {
 	if e.loadedTypes[1] {
-		return e.WhiteGames, nil
+		return e.AdministeredRooms, nil
 	}
-	return nil, &NotLoadedError{edge: "white_games"}
+	return nil, &NotLoadedError{edge: "administered_rooms"}
 }
 
-// BlackGamesOrErr returns the BlackGames value or an error if the edge
+// ParticipationsOrErr returns the Participations value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) BlackGamesOrErr() ([]*Game, error) {
+func (e UserEdges) ParticipationsOrErr() ([]*Participant, error) {
 	if e.loadedTypes[2] {
-		return e.BlackGames, nil
+		return e.Participations, nil
 	}
-	return nil, &NotLoadedError{edge: "black_games"}
+	return nil, &NotLoadedError{edge: "participations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -141,14 +141,14 @@ func (_m *User) QueryPassword() *UserPasswordQuery {
 	return NewUserClient(_m.config).QueryPassword(_m)
 }
 
-// QueryWhiteGames queries the "white_games" edge of the User entity.
-func (_m *User) QueryWhiteGames() *GameQuery {
-	return NewUserClient(_m.config).QueryWhiteGames(_m)
+// QueryAdministeredRooms queries the "administered_rooms" edge of the User entity.
+func (_m *User) QueryAdministeredRooms() *GameRoomQuery {
+	return NewUserClient(_m.config).QueryAdministeredRooms(_m)
 }
 
-// QueryBlackGames queries the "black_games" edge of the User entity.
-func (_m *User) QueryBlackGames() *GameQuery {
-	return NewUserClient(_m.config).QueryBlackGames(_m)
+// QueryParticipations queries the "participations" edge of the User entity.
+func (_m *User) QueryParticipations() *ParticipantQuery {
+	return NewUserClient(_m.config).QueryParticipations(_m)
 }
 
 // Update returns a builder for updating this User.

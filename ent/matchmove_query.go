@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
 	"xadrez/ent/predicate"
 
 	"entgo.io/ent"
@@ -17,53 +17,53 @@ import (
 	"github.com/google/uuid"
 )
 
-// GameMoveQuery is the builder for querying GameMove entities.
-type GameMoveQuery struct {
+// MatchMoveQuery is the builder for querying MatchMove entities.
+type MatchMoveQuery struct {
 	config
 	ctx        *QueryContext
-	order      []gamemove.OrderOption
+	order      []matchmove.OrderOption
 	inters     []Interceptor
-	predicates []predicate.GameMove
-	withGame   *GameQuery
+	predicates []predicate.MatchMove
+	withMatch  *MatchQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the GameMoveQuery builder.
-func (_q *GameMoveQuery) Where(ps ...predicate.GameMove) *GameMoveQuery {
+// Where adds a new predicate for the MatchMoveQuery builder.
+func (_q *MatchMoveQuery) Where(ps ...predicate.MatchMove) *MatchMoveQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *GameMoveQuery) Limit(limit int) *GameMoveQuery {
+func (_q *MatchMoveQuery) Limit(limit int) *MatchMoveQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *GameMoveQuery) Offset(offset int) *GameMoveQuery {
+func (_q *MatchMoveQuery) Offset(offset int) *MatchMoveQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *GameMoveQuery) Unique(unique bool) *GameMoveQuery {
+func (_q *MatchMoveQuery) Unique(unique bool) *MatchMoveQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *GameMoveQuery) Order(o ...gamemove.OrderOption) *GameMoveQuery {
+func (_q *MatchMoveQuery) Order(o ...matchmove.OrderOption) *MatchMoveQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryGame chains the current query on the "game" edge.
-func (_q *GameMoveQuery) QueryGame() *GameQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// QueryMatch chains the current query on the "match" edge.
+func (_q *MatchMoveQuery) QueryMatch() *MatchQuery {
+	query := (&MatchClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -73,9 +73,9 @@ func (_q *GameMoveQuery) QueryGame() *GameQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(gamemove.Table, gamemove.FieldID, selector),
-			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, gamemove.GameTable, gamemove.GameColumn),
+			sqlgraph.From(matchmove.Table, matchmove.FieldID, selector),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, matchmove.MatchTable, matchmove.MatchColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -83,21 +83,21 @@ func (_q *GameMoveQuery) QueryGame() *GameQuery {
 	return query
 }
 
-// First returns the first GameMove entity from the query.
-// Returns a *NotFoundError when no GameMove was found.
-func (_q *GameMoveQuery) First(ctx context.Context) (*GameMove, error) {
+// First returns the first MatchMove entity from the query.
+// Returns a *NotFoundError when no MatchMove was found.
+func (_q *MatchMoveQuery) First(ctx context.Context) (*MatchMove, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{gamemove.Label}
+		return nil, &NotFoundError{matchmove.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *GameMoveQuery) FirstX(ctx context.Context) *GameMove {
+func (_q *MatchMoveQuery) FirstX(ctx context.Context) *MatchMove {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -105,22 +105,22 @@ func (_q *GameMoveQuery) FirstX(ctx context.Context) *GameMove {
 	return node
 }
 
-// FirstID returns the first GameMove ID from the query.
-// Returns a *NotFoundError when no GameMove ID was found.
-func (_q *GameMoveQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first MatchMove ID from the query.
+// Returns a *NotFoundError when no MatchMove ID was found.
+func (_q *MatchMoveQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{gamemove.Label}
+		err = &NotFoundError{matchmove.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *GameMoveQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *MatchMoveQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -128,10 +128,10 @@ func (_q *GameMoveQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single GameMove entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one GameMove entity is found.
-// Returns a *NotFoundError when no GameMove entities are found.
-func (_q *GameMoveQuery) Only(ctx context.Context) (*GameMove, error) {
+// Only returns a single MatchMove entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one MatchMove entity is found.
+// Returns a *NotFoundError when no MatchMove entities are found.
+func (_q *MatchMoveQuery) Only(ctx context.Context) (*MatchMove, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -140,14 +140,14 @@ func (_q *GameMoveQuery) Only(ctx context.Context) (*GameMove, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{gamemove.Label}
+		return nil, &NotFoundError{matchmove.Label}
 	default:
-		return nil, &NotSingularError{gamemove.Label}
+		return nil, &NotSingularError{matchmove.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *GameMoveQuery) OnlyX(ctx context.Context) *GameMove {
+func (_q *MatchMoveQuery) OnlyX(ctx context.Context) *MatchMove {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -155,10 +155,10 @@ func (_q *GameMoveQuery) OnlyX(ctx context.Context) *GameMove {
 	return node
 }
 
-// OnlyID is like Only, but returns the only GameMove ID in the query.
-// Returns a *NotSingularError when more than one GameMove ID is found.
+// OnlyID is like Only, but returns the only MatchMove ID in the query.
+// Returns a *NotSingularError when more than one MatchMove ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *GameMoveQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *MatchMoveQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -167,15 +167,15 @@ func (_q *GameMoveQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{gamemove.Label}
+		err = &NotFoundError{matchmove.Label}
 	default:
-		err = &NotSingularError{gamemove.Label}
+		err = &NotSingularError{matchmove.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *GameMoveQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *MatchMoveQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -183,18 +183,18 @@ func (_q *GameMoveQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of GameMoves.
-func (_q *GameMoveQuery) All(ctx context.Context) ([]*GameMove, error) {
+// All executes the query and returns a list of MatchMoves.
+func (_q *MatchMoveQuery) All(ctx context.Context) ([]*MatchMove, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*GameMove, *GameMoveQuery]()
-	return withInterceptors[[]*GameMove](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*MatchMove, *MatchMoveQuery]()
+	return withInterceptors[[]*MatchMove](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *GameMoveQuery) AllX(ctx context.Context) []*GameMove {
+func (_q *MatchMoveQuery) AllX(ctx context.Context) []*MatchMove {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -202,20 +202,20 @@ func (_q *GameMoveQuery) AllX(ctx context.Context) []*GameMove {
 	return nodes
 }
 
-// IDs executes the query and returns a list of GameMove IDs.
-func (_q *GameMoveQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of MatchMove IDs.
+func (_q *MatchMoveQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(gamemove.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(matchmove.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *GameMoveQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *MatchMoveQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -224,16 +224,16 @@ func (_q *GameMoveQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *GameMoveQuery) Count(ctx context.Context) (int, error) {
+func (_q *MatchMoveQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*GameMoveQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*MatchMoveQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *GameMoveQuery) CountX(ctx context.Context) int {
+func (_q *MatchMoveQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -242,7 +242,7 @@ func (_q *GameMoveQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *GameMoveQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *MatchMoveQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -255,7 +255,7 @@ func (_q *GameMoveQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *GameMoveQuery) ExistX(ctx context.Context) bool {
+func (_q *MatchMoveQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -263,33 +263,33 @@ func (_q *GameMoveQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the GameMoveQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the MatchMoveQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *GameMoveQuery) Clone() *GameMoveQuery {
+func (_q *MatchMoveQuery) Clone() *MatchMoveQuery {
 	if _q == nil {
 		return nil
 	}
-	return &GameMoveQuery{
+	return &MatchMoveQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]gamemove.OrderOption{}, _q.order...),
+		order:      append([]matchmove.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.GameMove{}, _q.predicates...),
-		withGame:   _q.withGame.Clone(),
+		predicates: append([]predicate.MatchMove{}, _q.predicates...),
+		withMatch:  _q.withMatch.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithGame tells the query-builder to eager-load the nodes that are connected to
-// the "game" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *GameMoveQuery) WithGame(opts ...func(*GameQuery)) *GameMoveQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// WithMatch tells the query-builder to eager-load the nodes that are connected to
+// the "match" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *MatchMoveQuery) WithMatch(opts ...func(*MatchQuery)) *MatchMoveQuery {
+	query := (&MatchClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withGame = query
+	_q.withMatch = query
 	return _q
 }
 
@@ -303,15 +303,15 @@ func (_q *GameMoveQuery) WithGame(opts ...func(*GameQuery)) *GameMoveQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.GameMove.Query().
-//		GroupBy(gamemove.FieldCreatedAt).
+//	client.MatchMove.Query().
+//		GroupBy(matchmove.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *GameMoveQuery) GroupBy(field string, fields ...string) *GameMoveGroupBy {
+func (_q *MatchMoveQuery) GroupBy(field string, fields ...string) *MatchMoveGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &GameMoveGroupBy{build: _q}
+	grbuild := &MatchMoveGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = gamemove.Label
+	grbuild.label = matchmove.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -325,23 +325,23 @@ func (_q *GameMoveQuery) GroupBy(field string, fields ...string) *GameMoveGroupB
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.GameMove.Query().
-//		Select(gamemove.FieldCreatedAt).
+//	client.MatchMove.Query().
+//		Select(matchmove.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *GameMoveQuery) Select(fields ...string) *GameMoveSelect {
+func (_q *MatchMoveQuery) Select(fields ...string) *MatchMoveSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &GameMoveSelect{GameMoveQuery: _q}
-	sbuild.label = gamemove.Label
+	sbuild := &MatchMoveSelect{MatchMoveQuery: _q}
+	sbuild.label = matchmove.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a GameMoveSelect configured with the given aggregations.
-func (_q *GameMoveQuery) Aggregate(fns ...AggregateFunc) *GameMoveSelect {
+// Aggregate returns a MatchMoveSelect configured with the given aggregations.
+func (_q *MatchMoveQuery) Aggregate(fns ...AggregateFunc) *MatchMoveSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *GameMoveQuery) prepareQuery(ctx context.Context) error {
+func (_q *MatchMoveQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -353,7 +353,7 @@ func (_q *GameMoveQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !gamemove.ValidColumn(f) {
+		if !matchmove.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -367,19 +367,19 @@ func (_q *GameMoveQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *GameMoveQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GameMove, error) {
+func (_q *MatchMoveQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*MatchMove, error) {
 	var (
-		nodes       = []*GameMove{}
+		nodes       = []*MatchMove{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withGame != nil,
+			_q.withMatch != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*GameMove).scanValues(nil, columns)
+		return (*MatchMove).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &GameMove{config: _q.config}
+		node := &MatchMove{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -393,20 +393,20 @@ func (_q *GameMoveQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Gam
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withGame; query != nil {
-		if err := _q.loadGame(ctx, query, nodes, nil,
-			func(n *GameMove, e *Game) { n.Edges.Game = e }); err != nil {
+	if query := _q.withMatch; query != nil {
+		if err := _q.loadMatch(ctx, query, nodes, nil,
+			func(n *MatchMove, e *Match) { n.Edges.Match = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *GameMoveQuery) loadGame(ctx context.Context, query *GameQuery, nodes []*GameMove, init func(*GameMove), assign func(*GameMove, *Game)) error {
+func (_q *MatchMoveQuery) loadMatch(ctx context.Context, query *MatchQuery, nodes []*MatchMove, init func(*MatchMove), assign func(*MatchMove, *Match)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*GameMove)
+	nodeids := make(map[uuid.UUID][]*MatchMove)
 	for i := range nodes {
-		fk := nodes[i].GameID
+		fk := nodes[i].MatchID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -415,7 +415,7 @@ func (_q *GameMoveQuery) loadGame(ctx context.Context, query *GameQuery, nodes [
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(game.IDIn(ids...))
+	query.Where(match.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -423,7 +423,7 @@ func (_q *GameMoveQuery) loadGame(ctx context.Context, query *GameQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "game_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "match_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -432,7 +432,7 @@ func (_q *GameMoveQuery) loadGame(ctx context.Context, query *GameQuery, nodes [
 	return nil
 }
 
-func (_q *GameMoveQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *MatchMoveQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -441,8 +441,8 @@ func (_q *GameMoveQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *GameMoveQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(gamemove.Table, gamemove.Columns, sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID))
+func (_q *MatchMoveQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(matchmove.Table, matchmove.Columns, sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -451,14 +451,14 @@ func (_q *GameMoveQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, gamemove.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, matchmove.FieldID)
 		for i := range fields {
-			if fields[i] != gamemove.FieldID {
+			if fields[i] != matchmove.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withGame != nil {
-			_spec.Node.AddColumnOnce(gamemove.FieldGameID)
+		if _q.withMatch != nil {
+			_spec.Node.AddColumnOnce(matchmove.FieldMatchID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -484,12 +484,12 @@ func (_q *GameMoveQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *GameMoveQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *MatchMoveQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(gamemove.Table)
+	t1 := builder.Table(matchmove.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = gamemove.Columns
+		columns = matchmove.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -516,28 +516,28 @@ func (_q *GameMoveQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// GameMoveGroupBy is the group-by builder for GameMove entities.
-type GameMoveGroupBy struct {
+// MatchMoveGroupBy is the group-by builder for MatchMove entities.
+type MatchMoveGroupBy struct {
 	selector
-	build *GameMoveQuery
+	build *MatchMoveQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *GameMoveGroupBy) Aggregate(fns ...AggregateFunc) *GameMoveGroupBy {
+func (_g *MatchMoveGroupBy) Aggregate(fns ...AggregateFunc) *MatchMoveGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *GameMoveGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *MatchMoveGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GameMoveQuery, *GameMoveGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*MatchMoveQuery, *MatchMoveGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *GameMoveGroupBy) sqlScan(ctx context.Context, root *GameMoveQuery, v any) error {
+func (_g *MatchMoveGroupBy) sqlScan(ctx context.Context, root *MatchMoveQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -564,28 +564,28 @@ func (_g *GameMoveGroupBy) sqlScan(ctx context.Context, root *GameMoveQuery, v a
 	return sql.ScanSlice(rows, v)
 }
 
-// GameMoveSelect is the builder for selecting fields of GameMove entities.
-type GameMoveSelect struct {
-	*GameMoveQuery
+// MatchMoveSelect is the builder for selecting fields of MatchMove entities.
+type MatchMoveSelect struct {
+	*MatchMoveQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *GameMoveSelect) Aggregate(fns ...AggregateFunc) *GameMoveSelect {
+func (_s *MatchMoveSelect) Aggregate(fns ...AggregateFunc) *MatchMoveSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *GameMoveSelect) Scan(ctx context.Context, v any) error {
+func (_s *MatchMoveSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GameMoveQuery, *GameMoveSelect](ctx, _s.GameMoveQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*MatchMoveQuery, *MatchMoveSelect](ctx, _s.MatchMoveQuery, _s, _s.inters, v)
 }
 
-func (_s *GameMoveSelect) sqlScan(ctx context.Context, root *GameMoveQuery, v any) error {
+func (_s *MatchMoveSelect) sqlScan(ctx context.Context, root *MatchMoveQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

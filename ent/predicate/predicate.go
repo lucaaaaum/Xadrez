@@ -6,11 +6,17 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Game is the predicate function for game builders.
-type Game func(*sql.Selector)
+// GameRoom is the predicate function for gameroom builders.
+type GameRoom func(*sql.Selector)
 
-// GameMove is the predicate function for gamemove builders.
-type GameMove func(*sql.Selector)
+// Match is the predicate function for match builders.
+type Match func(*sql.Selector)
+
+// MatchMove is the predicate function for matchmove builders.
+type MatchMove func(*sql.Selector)
+
+// Participant is the predicate function for participant builders.
+type Participant func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

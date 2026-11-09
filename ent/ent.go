@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
+	"xadrez/ent/participant"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -76,8 +78,10 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			game.Table:         game.ValidColumn,
-			gamemove.Table:     gamemove.ValidColumn,
+			gameroom.Table:     gameroom.ValidColumn,
+			match.Table:        match.ValidColumn,
+			matchmove.Table:    matchmove.ValidColumn,
+			participant.Table:  participant.ValidColumn,
 			user.Table:         user.ValidColumn,
 			userpassword.Table: userpassword.ValidColumn,
 		})

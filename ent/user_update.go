@@ -7,7 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"xadrez/ent/game"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/participant"
 	"xadrez/ent/predicate"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
@@ -56,34 +57,34 @@ func (_u *UserUpdate) SetPassword(v *UserPassword) *UserUpdate {
 	return _u.SetPasswordID(v.ID)
 }
 
-// AddWhiteGameIDs adds the "white_games" edge to the Game entity by IDs.
-func (_u *UserUpdate) AddWhiteGameIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.AddWhiteGameIDs(ids...)
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_u *UserUpdate) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddAdministeredRoomIDs(ids...)
 	return _u
 }
 
-// AddWhiteGames adds the "white_games" edges to the Game entity.
-func (_u *UserUpdate) AddWhiteGames(v ...*Game) *UserUpdate {
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdate) AddAdministeredRooms(v ...*GameRoom) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddWhiteGameIDs(ids...)
+	return _u.AddAdministeredRoomIDs(ids...)
 }
 
-// AddBlackGameIDs adds the "black_games" edge to the Game entity by IDs.
-func (_u *UserUpdate) AddBlackGameIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.AddBlackGameIDs(ids...)
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_u *UserUpdate) AddParticipationIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddParticipationIDs(ids...)
 	return _u
 }
 
-// AddBlackGames adds the "black_games" edges to the Game entity.
-func (_u *UserUpdate) AddBlackGames(v ...*Game) *UserUpdate {
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_u *UserUpdate) AddParticipations(v ...*Participant) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddBlackGameIDs(ids...)
+	return _u.AddParticipationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -97,46 +98,46 @@ func (_u *UserUpdate) ClearPassword() *UserUpdate {
 	return _u
 }
 
-// ClearWhiteGames clears all "white_games" edges to the Game entity.
-func (_u *UserUpdate) ClearWhiteGames() *UserUpdate {
-	_u.mutation.ClearWhiteGames()
+// ClearAdministeredRooms clears all "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdate) ClearAdministeredRooms() *UserUpdate {
+	_u.mutation.ClearAdministeredRooms()
 	return _u
 }
 
-// RemoveWhiteGameIDs removes the "white_games" edge to Game entities by IDs.
-func (_u *UserUpdate) RemoveWhiteGameIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.RemoveWhiteGameIDs(ids...)
+// RemoveAdministeredRoomIDs removes the "administered_rooms" edge to GameRoom entities by IDs.
+func (_u *UserUpdate) RemoveAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveAdministeredRoomIDs(ids...)
 	return _u
 }
 
-// RemoveWhiteGames removes "white_games" edges to Game entities.
-func (_u *UserUpdate) RemoveWhiteGames(v ...*Game) *UserUpdate {
+// RemoveAdministeredRooms removes "administered_rooms" edges to GameRoom entities.
+func (_u *UserUpdate) RemoveAdministeredRooms(v ...*GameRoom) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveWhiteGameIDs(ids...)
+	return _u.RemoveAdministeredRoomIDs(ids...)
 }
 
-// ClearBlackGames clears all "black_games" edges to the Game entity.
-func (_u *UserUpdate) ClearBlackGames() *UserUpdate {
-	_u.mutation.ClearBlackGames()
+// ClearParticipations clears all "participations" edges to the Participant entity.
+func (_u *UserUpdate) ClearParticipations() *UserUpdate {
+	_u.mutation.ClearParticipations()
 	return _u
 }
 
-// RemoveBlackGameIDs removes the "black_games" edge to Game entities by IDs.
-func (_u *UserUpdate) RemoveBlackGameIDs(ids ...uuid.UUID) *UserUpdate {
-	_u.mutation.RemoveBlackGameIDs(ids...)
+// RemoveParticipationIDs removes the "participations" edge to Participant entities by IDs.
+func (_u *UserUpdate) RemoveParticipationIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveParticipationIDs(ids...)
 	return _u
 }
 
-// RemoveBlackGames removes "black_games" edges to Game entities.
-func (_u *UserUpdate) RemoveBlackGames(v ...*Game) *UserUpdate {
+// RemoveParticipations removes "participations" edges to Participant entities.
+func (_u *UserUpdate) RemoveParticipations(v ...*Participant) *UserUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveBlackGameIDs(ids...)
+	return _u.RemoveParticipationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -216,28 +217,28 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.WhiteGamesCleared() {
+	if _u.mutation.AdministeredRoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedWhiteGamesIDs(); len(nodes) > 0 && !_u.mutation.WhiteGamesCleared() {
+	if nodes := _u.mutation.RemovedAdministeredRoomsIDs(); len(nodes) > 0 && !_u.mutation.AdministeredRoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -245,15 +246,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.WhiteGamesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -261,28 +262,28 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.BlackGamesCleared() {
+	if _u.mutation.ParticipationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedBlackGamesIDs(); len(nodes) > 0 && !_u.mutation.BlackGamesCleared() {
+	if nodes := _u.mutation.RemovedParticipationsIDs(); len(nodes) > 0 && !_u.mutation.ParticipationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -290,15 +291,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.BlackGamesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ParticipationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -351,34 +352,34 @@ func (_u *UserUpdateOne) SetPassword(v *UserPassword) *UserUpdateOne {
 	return _u.SetPasswordID(v.ID)
 }
 
-// AddWhiteGameIDs adds the "white_games" edge to the Game entity by IDs.
-func (_u *UserUpdateOne) AddWhiteGameIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.AddWhiteGameIDs(ids...)
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_u *UserUpdateOne) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddAdministeredRoomIDs(ids...)
 	return _u
 }
 
-// AddWhiteGames adds the "white_games" edges to the Game entity.
-func (_u *UserUpdateOne) AddWhiteGames(v ...*Game) *UserUpdateOne {
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdateOne) AddAdministeredRooms(v ...*GameRoom) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddWhiteGameIDs(ids...)
+	return _u.AddAdministeredRoomIDs(ids...)
 }
 
-// AddBlackGameIDs adds the "black_games" edge to the Game entity by IDs.
-func (_u *UserUpdateOne) AddBlackGameIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.AddBlackGameIDs(ids...)
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_u *UserUpdateOne) AddParticipationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddParticipationIDs(ids...)
 	return _u
 }
 
-// AddBlackGames adds the "black_games" edges to the Game entity.
-func (_u *UserUpdateOne) AddBlackGames(v ...*Game) *UserUpdateOne {
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_u *UserUpdateOne) AddParticipations(v ...*Participant) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddBlackGameIDs(ids...)
+	return _u.AddParticipationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -392,46 +393,46 @@ func (_u *UserUpdateOne) ClearPassword() *UserUpdateOne {
 	return _u
 }
 
-// ClearWhiteGames clears all "white_games" edges to the Game entity.
-func (_u *UserUpdateOne) ClearWhiteGames() *UserUpdateOne {
-	_u.mutation.ClearWhiteGames()
+// ClearAdministeredRooms clears all "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdateOne) ClearAdministeredRooms() *UserUpdateOne {
+	_u.mutation.ClearAdministeredRooms()
 	return _u
 }
 
-// RemoveWhiteGameIDs removes the "white_games" edge to Game entities by IDs.
-func (_u *UserUpdateOne) RemoveWhiteGameIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.RemoveWhiteGameIDs(ids...)
+// RemoveAdministeredRoomIDs removes the "administered_rooms" edge to GameRoom entities by IDs.
+func (_u *UserUpdateOne) RemoveAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveAdministeredRoomIDs(ids...)
 	return _u
 }
 
-// RemoveWhiteGames removes "white_games" edges to Game entities.
-func (_u *UserUpdateOne) RemoveWhiteGames(v ...*Game) *UserUpdateOne {
+// RemoveAdministeredRooms removes "administered_rooms" edges to GameRoom entities.
+func (_u *UserUpdateOne) RemoveAdministeredRooms(v ...*GameRoom) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveWhiteGameIDs(ids...)
+	return _u.RemoveAdministeredRoomIDs(ids...)
 }
 
-// ClearBlackGames clears all "black_games" edges to the Game entity.
-func (_u *UserUpdateOne) ClearBlackGames() *UserUpdateOne {
-	_u.mutation.ClearBlackGames()
+// ClearParticipations clears all "participations" edges to the Participant entity.
+func (_u *UserUpdateOne) ClearParticipations() *UserUpdateOne {
+	_u.mutation.ClearParticipations()
 	return _u
 }
 
-// RemoveBlackGameIDs removes the "black_games" edge to Game entities by IDs.
-func (_u *UserUpdateOne) RemoveBlackGameIDs(ids ...uuid.UUID) *UserUpdateOne {
-	_u.mutation.RemoveBlackGameIDs(ids...)
+// RemoveParticipationIDs removes the "participations" edge to Participant entities by IDs.
+func (_u *UserUpdateOne) RemoveParticipationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveParticipationIDs(ids...)
 	return _u
 }
 
-// RemoveBlackGames removes "black_games" edges to Game entities.
-func (_u *UserUpdateOne) RemoveBlackGames(v ...*Game) *UserUpdateOne {
+// RemoveParticipations removes "participations" edges to Participant entities.
+func (_u *UserUpdateOne) RemoveParticipations(v ...*Participant) *UserUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveBlackGameIDs(ids...)
+	return _u.RemoveParticipationIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -541,28 +542,28 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.WhiteGamesCleared() {
+	if _u.mutation.AdministeredRoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedWhiteGamesIDs(); len(nodes) > 0 && !_u.mutation.WhiteGamesCleared() {
+	if nodes := _u.mutation.RemovedAdministeredRoomsIDs(); len(nodes) > 0 && !_u.mutation.AdministeredRoomsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -570,15 +571,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.WhiteGamesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.WhiteGamesTable,
-			Columns: []string{user.WhiteGamesColumn},
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -586,28 +587,28 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.BlackGamesCleared() {
+	if _u.mutation.ParticipationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedBlackGamesIDs(); len(nodes) > 0 && !_u.mutation.BlackGamesCleared() {
+	if nodes := _u.mutation.RemovedParticipationsIDs(); len(nodes) > 0 && !_u.mutation.ParticipationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -615,15 +616,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.BlackGamesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ParticipationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.BlackGamesTable,
-			Columns: []string{user.BlackGamesColumn},
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

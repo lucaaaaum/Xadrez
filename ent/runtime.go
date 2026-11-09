@@ -4,8 +4,10 @@ package ent
 
 import (
 	"time"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
+	"xadrez/ent/participant"
 	"xadrez/ent/schema"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
@@ -17,26 +19,26 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	gameMixin := schema.Game{}.Mixin()
-	gameMixinFields0 := gameMixin[0].Fields()
-	_ = gameMixinFields0
-	gameFields := schema.Game{}.Fields()
-	_ = gameFields
-	// gameDescCreatedAt is the schema descriptor for created_at field.
-	gameDescCreatedAt := gameMixinFields0[1].Descriptor()
-	// game.DefaultCreatedAt holds the default value on creation for the created_at field.
-	game.DefaultCreatedAt = gameDescCreatedAt.Default.(func() time.Time)
-	// gameDescUpdatedAt is the schema descriptor for updated_at field.
-	gameDescUpdatedAt := gameMixinFields0[2].Descriptor()
-	// game.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	game.DefaultUpdatedAt = gameDescUpdatedAt.Default.(func() time.Time)
-	// game.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	game.UpdateDefaultUpdatedAt = gameDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// gameDescName is the schema descriptor for name field.
-	gameDescName := gameFields[0].Descriptor()
-	// game.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	game.NameValidator = func() func(string) error {
-		validators := gameDescName.Validators
+	gameroomMixin := schema.GameRoom{}.Mixin()
+	gameroomMixinFields0 := gameroomMixin[0].Fields()
+	_ = gameroomMixinFields0
+	gameroomFields := schema.GameRoom{}.Fields()
+	_ = gameroomFields
+	// gameroomDescCreatedAt is the schema descriptor for created_at field.
+	gameroomDescCreatedAt := gameroomMixinFields0[1].Descriptor()
+	// gameroom.DefaultCreatedAt holds the default value on creation for the created_at field.
+	gameroom.DefaultCreatedAt = gameroomDescCreatedAt.Default.(func() time.Time)
+	// gameroomDescUpdatedAt is the schema descriptor for updated_at field.
+	gameroomDescUpdatedAt := gameroomMixinFields0[2].Descriptor()
+	// gameroom.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	gameroom.DefaultUpdatedAt = gameroomDescUpdatedAt.Default.(func() time.Time)
+	// gameroom.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	gameroom.UpdateDefaultUpdatedAt = gameroomDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// gameroomDescName is the schema descriptor for name field.
+	gameroomDescName := gameroomFields[0].Descriptor()
+	// gameroom.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	gameroom.NameValidator = func() func(string) error {
+		validators := gameroomDescName.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
@@ -50,49 +52,87 @@ func init() {
 			return nil
 		}
 	}()
-	// gameDescID is the schema descriptor for id field.
-	gameDescID := gameMixinFields0[0].Descriptor()
-	// game.DefaultID holds the default value on creation for the id field.
-	game.DefaultID = gameDescID.Default.(func() uuid.UUID)
-	gamemoveMixin := schema.GameMove{}.Mixin()
-	gamemoveMixinFields0 := gamemoveMixin[0].Fields()
-	_ = gamemoveMixinFields0
-	gamemoveFields := schema.GameMove{}.Fields()
-	_ = gamemoveFields
-	// gamemoveDescCreatedAt is the schema descriptor for created_at field.
-	gamemoveDescCreatedAt := gamemoveMixinFields0[1].Descriptor()
-	// gamemove.DefaultCreatedAt holds the default value on creation for the created_at field.
-	gamemove.DefaultCreatedAt = gamemoveDescCreatedAt.Default.(func() time.Time)
-	// gamemoveDescUpdatedAt is the schema descriptor for updated_at field.
-	gamemoveDescUpdatedAt := gamemoveMixinFields0[2].Descriptor()
-	// gamemove.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	gamemove.DefaultUpdatedAt = gamemoveDescUpdatedAt.Default.(func() time.Time)
-	// gamemove.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	gamemove.UpdateDefaultUpdatedAt = gamemoveDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// gamemoveDescPly is the schema descriptor for ply field.
-	gamemoveDescPly := gamemoveFields[1].Descriptor()
-	// gamemove.PlyValidator is a validator for the "ply" field. It is called by the builders before save.
-	gamemove.PlyValidator = gamemoveDescPly.Validators[0].(func(int) error)
-	// gamemoveDescFromX is the schema descriptor for from_x field.
-	gamemoveDescFromX := gamemoveFields[2].Descriptor()
-	// gamemove.FromXValidator is a validator for the "from_x" field. It is called by the builders before save.
-	gamemove.FromXValidator = gamemoveDescFromX.Validators[0].(func(int) error)
-	// gamemoveDescFromY is the schema descriptor for from_y field.
-	gamemoveDescFromY := gamemoveFields[3].Descriptor()
-	// gamemove.FromYValidator is a validator for the "from_y" field. It is called by the builders before save.
-	gamemove.FromYValidator = gamemoveDescFromY.Validators[0].(func(int) error)
-	// gamemoveDescToX is the schema descriptor for to_x field.
-	gamemoveDescToX := gamemoveFields[4].Descriptor()
-	// gamemove.ToXValidator is a validator for the "to_x" field. It is called by the builders before save.
-	gamemove.ToXValidator = gamemoveDescToX.Validators[0].(func(int) error)
-	// gamemoveDescToY is the schema descriptor for to_y field.
-	gamemoveDescToY := gamemoveFields[5].Descriptor()
-	// gamemove.ToYValidator is a validator for the "to_y" field. It is called by the builders before save.
-	gamemove.ToYValidator = gamemoveDescToY.Validators[0].(func(int) error)
-	// gamemoveDescID is the schema descriptor for id field.
-	gamemoveDescID := gamemoveMixinFields0[0].Descriptor()
-	// gamemove.DefaultID holds the default value on creation for the id field.
-	gamemove.DefaultID = gamemoveDescID.Default.(func() uuid.UUID)
+	// gameroomDescID is the schema descriptor for id field.
+	gameroomDescID := gameroomMixinFields0[0].Descriptor()
+	// gameroom.DefaultID holds the default value on creation for the id field.
+	gameroom.DefaultID = gameroomDescID.Default.(func() uuid.UUID)
+	matchMixin := schema.Match{}.Mixin()
+	matchMixinFields0 := matchMixin[0].Fields()
+	_ = matchMixinFields0
+	matchFields := schema.Match{}.Fields()
+	_ = matchFields
+	// matchDescCreatedAt is the schema descriptor for created_at field.
+	matchDescCreatedAt := matchMixinFields0[1].Descriptor()
+	// match.DefaultCreatedAt holds the default value on creation for the created_at field.
+	match.DefaultCreatedAt = matchDescCreatedAt.Default.(func() time.Time)
+	// matchDescUpdatedAt is the schema descriptor for updated_at field.
+	matchDescUpdatedAt := matchMixinFields0[2].Descriptor()
+	// match.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	match.DefaultUpdatedAt = matchDescUpdatedAt.Default.(func() time.Time)
+	// match.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	match.UpdateDefaultUpdatedAt = matchDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// matchDescID is the schema descriptor for id field.
+	matchDescID := matchMixinFields0[0].Descriptor()
+	// match.DefaultID holds the default value on creation for the id field.
+	match.DefaultID = matchDescID.Default.(func() uuid.UUID)
+	matchmoveMixin := schema.MatchMove{}.Mixin()
+	matchmoveMixinFields0 := matchmoveMixin[0].Fields()
+	_ = matchmoveMixinFields0
+	matchmoveFields := schema.MatchMove{}.Fields()
+	_ = matchmoveFields
+	// matchmoveDescCreatedAt is the schema descriptor for created_at field.
+	matchmoveDescCreatedAt := matchmoveMixinFields0[1].Descriptor()
+	// matchmove.DefaultCreatedAt holds the default value on creation for the created_at field.
+	matchmove.DefaultCreatedAt = matchmoveDescCreatedAt.Default.(func() time.Time)
+	// matchmoveDescUpdatedAt is the schema descriptor for updated_at field.
+	matchmoveDescUpdatedAt := matchmoveMixinFields0[2].Descriptor()
+	// matchmove.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	matchmove.DefaultUpdatedAt = matchmoveDescUpdatedAt.Default.(func() time.Time)
+	// matchmove.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	matchmove.UpdateDefaultUpdatedAt = matchmoveDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// matchmoveDescPly is the schema descriptor for ply field.
+	matchmoveDescPly := matchmoveFields[1].Descriptor()
+	// matchmove.PlyValidator is a validator for the "ply" field. It is called by the builders before save.
+	matchmove.PlyValidator = matchmoveDescPly.Validators[0].(func(int) error)
+	// matchmoveDescFromX is the schema descriptor for from_x field.
+	matchmoveDescFromX := matchmoveFields[2].Descriptor()
+	// matchmove.FromXValidator is a validator for the "from_x" field. It is called by the builders before save.
+	matchmove.FromXValidator = matchmoveDescFromX.Validators[0].(func(int) error)
+	// matchmoveDescFromY is the schema descriptor for from_y field.
+	matchmoveDescFromY := matchmoveFields[3].Descriptor()
+	// matchmove.FromYValidator is a validator for the "from_y" field. It is called by the builders before save.
+	matchmove.FromYValidator = matchmoveDescFromY.Validators[0].(func(int) error)
+	// matchmoveDescToX is the schema descriptor for to_x field.
+	matchmoveDescToX := matchmoveFields[4].Descriptor()
+	// matchmove.ToXValidator is a validator for the "to_x" field. It is called by the builders before save.
+	matchmove.ToXValidator = matchmoveDescToX.Validators[0].(func(int) error)
+	// matchmoveDescToY is the schema descriptor for to_y field.
+	matchmoveDescToY := matchmoveFields[5].Descriptor()
+	// matchmove.ToYValidator is a validator for the "to_y" field. It is called by the builders before save.
+	matchmove.ToYValidator = matchmoveDescToY.Validators[0].(func(int) error)
+	// matchmoveDescID is the schema descriptor for id field.
+	matchmoveDescID := matchmoveMixinFields0[0].Descriptor()
+	// matchmove.DefaultID holds the default value on creation for the id field.
+	matchmove.DefaultID = matchmoveDescID.Default.(func() uuid.UUID)
+	participantMixin := schema.Participant{}.Mixin()
+	participantMixinFields0 := participantMixin[0].Fields()
+	_ = participantMixinFields0
+	participantFields := schema.Participant{}.Fields()
+	_ = participantFields
+	// participantDescCreatedAt is the schema descriptor for created_at field.
+	participantDescCreatedAt := participantMixinFields0[1].Descriptor()
+	// participant.DefaultCreatedAt holds the default value on creation for the created_at field.
+	participant.DefaultCreatedAt = participantDescCreatedAt.Default.(func() time.Time)
+	// participantDescUpdatedAt is the schema descriptor for updated_at field.
+	participantDescUpdatedAt := participantMixinFields0[2].Descriptor()
+	// participant.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	participant.DefaultUpdatedAt = participantDescUpdatedAt.Default.(func() time.Time)
+	// participant.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	participant.UpdateDefaultUpdatedAt = participantDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// participantDescID is the schema descriptor for id field.
+	participantDescID := participantMixinFields0[0].Descriptor()
+	// participant.DefaultID holds the default value on creation for the id field.
+	participant.DefaultID = participantDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

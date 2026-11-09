@@ -7,7 +7,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
-	"xadrez/ent/game"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/participant"
 	"xadrez/ent/predicate"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
@@ -22,13 +23,13 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx            *QueryContext
-	order          []user.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.User
-	withPassword   *UserPasswordQuery
-	withWhiteGames *GameQuery
-	withBlackGames *GameQuery
+	ctx                   *QueryContext
+	order                 []user.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.User
+	withPassword          *UserPasswordQuery
+	withAdministeredRooms *GameRoomQuery
+	withParticipations    *ParticipantQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -87,9 +88,9 @@ func (_q *UserQuery) QueryPassword() *UserPasswordQuery {
 	return query
 }
 
-// QueryWhiteGames chains the current query on the "white_games" edge.
-func (_q *UserQuery) QueryWhiteGames() *GameQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// QueryAdministeredRooms chains the current query on the "administered_rooms" edge.
+func (_q *UserQuery) QueryAdministeredRooms() *GameRoomQuery {
+	query := (&GameRoomClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -100,8 +101,8 @@ func (_q *UserQuery) QueryWhiteGames() *GameQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.WhiteGamesTable, user.WhiteGamesColumn),
+			sqlgraph.To(gameroom.Table, gameroom.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AdministeredRoomsTable, user.AdministeredRoomsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -109,9 +110,9 @@ func (_q *UserQuery) QueryWhiteGames() *GameQuery {
 	return query
 }
 
-// QueryBlackGames chains the current query on the "black_games" edge.
-func (_q *UserQuery) QueryBlackGames() *GameQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// QueryParticipations chains the current query on the "participations" edge.
+func (_q *UserQuery) QueryParticipations() *ParticipantQuery {
+	query := (&ParticipantClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -122,8 +123,8 @@ func (_q *UserQuery) QueryBlackGames() *GameQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(game.Table, game.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.BlackGamesTable, user.BlackGamesColumn),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ParticipationsTable, user.ParticipationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +319,14 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:         _q.config,
-		ctx:            _q.ctx.Clone(),
-		order:          append([]user.OrderOption{}, _q.order...),
-		inters:         append([]Interceptor{}, _q.inters...),
-		predicates:     append([]predicate.User{}, _q.predicates...),
-		withPassword:   _q.withPassword.Clone(),
-		withWhiteGames: _q.withWhiteGames.Clone(),
-		withBlackGames: _q.withBlackGames.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]user.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.User{}, _q.predicates...),
+		withPassword:          _q.withPassword.Clone(),
+		withAdministeredRooms: _q.withAdministeredRooms.Clone(),
+		withParticipations:    _q.withParticipations.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -343,25 +344,25 @@ func (_q *UserQuery) WithPassword(opts ...func(*UserPasswordQuery)) *UserQuery {
 	return _q
 }
 
-// WithWhiteGames tells the query-builder to eager-load the nodes that are connected to
-// the "white_games" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithWhiteGames(opts ...func(*GameQuery)) *UserQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// WithAdministeredRooms tells the query-builder to eager-load the nodes that are connected to
+// the "administered_rooms" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithAdministeredRooms(opts ...func(*GameRoomQuery)) *UserQuery {
+	query := (&GameRoomClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withWhiteGames = query
+	_q.withAdministeredRooms = query
 	return _q
 }
 
-// WithBlackGames tells the query-builder to eager-load the nodes that are connected to
-// the "black_games" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithBlackGames(opts ...func(*GameQuery)) *UserQuery {
-	query := (&GameClient{config: _q.config}).Query()
+// WithParticipations tells the query-builder to eager-load the nodes that are connected to
+// the "participations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithParticipations(opts ...func(*ParticipantQuery)) *UserQuery {
+	query := (&ParticipantClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withBlackGames = query
+	_q.withParticipations = query
 	return _q
 }
 
@@ -445,8 +446,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
 			_q.withPassword != nil,
-			_q.withWhiteGames != nil,
-			_q.withBlackGames != nil,
+			_q.withAdministeredRooms != nil,
+			_q.withParticipations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -473,17 +474,17 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
-	if query := _q.withWhiteGames; query != nil {
-		if err := _q.loadWhiteGames(ctx, query, nodes,
-			func(n *User) { n.Edges.WhiteGames = []*Game{} },
-			func(n *User, e *Game) { n.Edges.WhiteGames = append(n.Edges.WhiteGames, e) }); err != nil {
+	if query := _q.withAdministeredRooms; query != nil {
+		if err := _q.loadAdministeredRooms(ctx, query, nodes,
+			func(n *User) { n.Edges.AdministeredRooms = []*GameRoom{} },
+			func(n *User, e *GameRoom) { n.Edges.AdministeredRooms = append(n.Edges.AdministeredRooms, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withBlackGames; query != nil {
-		if err := _q.loadBlackGames(ctx, query, nodes,
-			func(n *User) { n.Edges.BlackGames = []*Game{} },
-			func(n *User, e *Game) { n.Edges.BlackGames = append(n.Edges.BlackGames, e) }); err != nil {
+	if query := _q.withParticipations; query != nil {
+		if err := _q.loadParticipations(ctx, query, nodes,
+			func(n *User) { n.Edges.Participations = []*Participant{} },
+			func(n *User, e *Participant) { n.Edges.Participations = append(n.Edges.Participations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -517,7 +518,7 @@ func (_q *UserQuery) loadPassword(ctx context.Context, query *UserPasswordQuery,
 	}
 	return nil
 }
-func (_q *UserQuery) loadWhiteGames(ctx context.Context, query *GameQuery, nodes []*User, init func(*User), assign func(*User, *Game)) error {
+func (_q *UserQuery) loadAdministeredRooms(ctx context.Context, query *GameRoomQuery, nodes []*User, init func(*User), assign func(*User, *GameRoom)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -528,26 +529,26 @@ func (_q *UserQuery) loadWhiteGames(ctx context.Context, query *GameQuery, nodes
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(game.FieldWhitePlayerID)
+		query.ctx.AppendFieldOnce(gameroom.FieldAdminID)
 	}
-	query.Where(predicate.Game(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.WhiteGamesColumn), fks...))
+	query.Where(predicate.GameRoom(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.AdministeredRoomsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.WhitePlayerID
+		fk := n.AdminID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "white_player_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "admin_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
-func (_q *UserQuery) loadBlackGames(ctx context.Context, query *GameQuery, nodes []*User, init func(*User), assign func(*User, *Game)) error {
+func (_q *UserQuery) loadParticipations(ctx context.Context, query *ParticipantQuery, nodes []*User, init func(*User), assign func(*User, *Participant)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*User)
 	for i := range nodes {
@@ -558,20 +559,20 @@ func (_q *UserQuery) loadBlackGames(ctx context.Context, query *GameQuery, nodes
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(game.FieldBlackPlayerID)
+		query.ctx.AppendFieldOnce(participant.FieldUserID)
 	}
-	query.Where(predicate.Game(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.BlackGamesColumn), fks...))
+	query.Where(predicate.Participant(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ParticipationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.BlackPlayerID
+		fk := n.UserID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "black_player_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

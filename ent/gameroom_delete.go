@@ -4,7 +4,7 @@ package ent
 
 import (
 	"context"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/gameroom"
 	"xadrez/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -12,26 +12,26 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// GameMoveDelete is the builder for deleting a GameMove entity.
-type GameMoveDelete struct {
+// GameRoomDelete is the builder for deleting a GameRoom entity.
+type GameRoomDelete struct {
 	config
 	hooks    []Hook
-	mutation *GameMoveMutation
+	mutation *GameRoomMutation
 }
 
-// Where appends a list predicates to the GameMoveDelete builder.
-func (_d *GameMoveDelete) Where(ps ...predicate.GameMove) *GameMoveDelete {
+// Where appends a list predicates to the GameRoomDelete builder.
+func (_d *GameRoomDelete) Where(ps ...predicate.GameRoom) *GameRoomDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *GameMoveDelete) Exec(ctx context.Context) (int, error) {
+func (_d *GameRoomDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *GameMoveDelete) ExecX(ctx context.Context) int {
+func (_d *GameRoomDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *GameMoveDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *GameMoveDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(gamemove.Table, sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID))
+func (_d *GameRoomDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(gameroom.Table, sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *GameMoveDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// GameMoveDeleteOne is the builder for deleting a single GameMove entity.
-type GameMoveDeleteOne struct {
-	_d *GameMoveDelete
+// GameRoomDeleteOne is the builder for deleting a single GameRoom entity.
+type GameRoomDeleteOne struct {
+	_d *GameRoomDelete
 }
 
-// Where appends a list predicates to the GameMoveDelete builder.
-func (_d *GameMoveDeleteOne) Where(ps ...predicate.GameMove) *GameMoveDeleteOne {
+// Where appends a list predicates to the GameRoomDelete builder.
+func (_d *GameRoomDeleteOne) Where(ps ...predicate.GameRoom) *GameRoomDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *GameMoveDeleteOne) Exec(ctx context.Context) error {
+func (_d *GameRoomDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{gamemove.Label}
+		return &NotFoundError{gameroom.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *GameMoveDeleteOne) ExecX(ctx context.Context) {
+func (_d *GameRoomDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

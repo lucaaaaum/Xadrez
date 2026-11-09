@@ -4,7 +4,7 @@ package ent
 
 import (
 	"context"
-	"xadrez/ent/game"
+	"xadrez/ent/matchmove"
 	"xadrez/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -12,26 +12,26 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// GameDelete is the builder for deleting a Game entity.
-type GameDelete struct {
+// MatchMoveDelete is the builder for deleting a MatchMove entity.
+type MatchMoveDelete struct {
 	config
 	hooks    []Hook
-	mutation *GameMutation
+	mutation *MatchMoveMutation
 }
 
-// Where appends a list predicates to the GameDelete builder.
-func (_d *GameDelete) Where(ps ...predicate.Game) *GameDelete {
+// Where appends a list predicates to the MatchMoveDelete builder.
+func (_d *MatchMoveDelete) Where(ps ...predicate.MatchMove) *MatchMoveDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *GameDelete) Exec(ctx context.Context) (int, error) {
+func (_d *MatchMoveDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *GameDelete) ExecX(ctx context.Context) int {
+func (_d *MatchMoveDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *GameDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *GameDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(game.Table, sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID))
+func (_d *MatchMoveDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(matchmove.Table, sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *GameDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// GameDeleteOne is the builder for deleting a single Game entity.
-type GameDeleteOne struct {
-	_d *GameDelete
+// MatchMoveDeleteOne is the builder for deleting a single MatchMove entity.
+type MatchMoveDeleteOne struct {
+	_d *MatchMoveDelete
 }
 
-// Where appends a list predicates to the GameDelete builder.
-func (_d *GameDeleteOne) Where(ps ...predicate.Game) *GameDeleteOne {
+// Where appends a list predicates to the MatchMoveDelete builder.
+func (_d *MatchMoveDeleteOne) Where(ps ...predicate.MatchMove) *MatchMoveDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *GameDeleteOne) Exec(ctx context.Context) error {
+func (_d *MatchMoveDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{game.Label}
+		return &NotFoundError{matchmove.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *GameDeleteOne) ExecX(ctx context.Context) {
+func (_d *MatchMoveDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

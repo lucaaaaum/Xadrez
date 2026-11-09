@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/matchmove"
 	"xadrez/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -15,38 +15,38 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// GameMoveUpdate is the builder for updating GameMove entities.
-type GameMoveUpdate struct {
+// MatchMoveUpdate is the builder for updating MatchMove entities.
+type MatchMoveUpdate struct {
 	config
 	hooks    []Hook
-	mutation *GameMoveMutation
+	mutation *MatchMoveMutation
 }
 
-// Where appends a list predicates to the GameMoveUpdate builder.
-func (_u *GameMoveUpdate) Where(ps ...predicate.GameMove) *GameMoveUpdate {
+// Where appends a list predicates to the MatchMoveUpdate builder.
+func (_u *MatchMoveUpdate) Where(ps ...predicate.MatchMove) *MatchMoveUpdate {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *GameMoveUpdate) SetUpdatedAt(v time.Time) *GameMoveUpdate {
+func (_u *MatchMoveUpdate) SetUpdatedAt(v time.Time) *MatchMoveUpdate {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
-// Mutation returns the GameMoveMutation object of the builder.
-func (_u *GameMoveUpdate) Mutation() *GameMoveMutation {
+// Mutation returns the MatchMoveMutation object of the builder.
+func (_u *MatchMoveUpdate) Mutation() *MatchMoveMutation {
 	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (_u *GameMoveUpdate) Save(ctx context.Context) (int, error) {
+func (_u *MatchMoveUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *GameMoveUpdate) SaveX(ctx context.Context) int {
+func (_u *MatchMoveUpdate) SaveX(ctx context.Context) int {
 	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -55,39 +55,39 @@ func (_u *GameMoveUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (_u *GameMoveUpdate) Exec(ctx context.Context) error {
+func (_u *MatchMoveUpdate) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *GameMoveUpdate) ExecX(ctx context.Context) {
+func (_u *MatchMoveUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *GameMoveUpdate) defaults() {
+func (_u *MatchMoveUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := gamemove.UpdateDefaultUpdatedAt()
+		v := matchmove.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *GameMoveUpdate) check() error {
-	if _u.mutation.GameCleared() && len(_u.mutation.GameIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "GameMove.game"`)
+func (_u *MatchMoveUpdate) check() error {
+	if _u.mutation.MatchCleared() && len(_u.mutation.MatchIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "MatchMove.match"`)
 	}
 	return nil
 }
 
-func (_u *GameMoveUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+func (_u *MatchMoveUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(gamemove.Table, gamemove.Columns, sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(matchmove.Table, matchmove.Columns, sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -96,14 +96,14 @@ func (_u *GameMoveUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(gamemove.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(matchmove.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.PromotionCleared() {
-		_spec.ClearField(gamemove.FieldPromotion, field.TypeEnum)
+		_spec.ClearField(matchmove.FieldPromotion, field.TypeEnum)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{gamemove.Label}
+			err = &NotFoundError{matchmove.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -113,46 +113,46 @@ func (_u *GameMoveUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	return _node, nil
 }
 
-// GameMoveUpdateOne is the builder for updating a single GameMove entity.
-type GameMoveUpdateOne struct {
+// MatchMoveUpdateOne is the builder for updating a single MatchMove entity.
+type MatchMoveUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *GameMoveMutation
+	mutation *MatchMoveMutation
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *GameMoveUpdateOne) SetUpdatedAt(v time.Time) *GameMoveUpdateOne {
+func (_u *MatchMoveUpdateOne) SetUpdatedAt(v time.Time) *MatchMoveUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
-// Mutation returns the GameMoveMutation object of the builder.
-func (_u *GameMoveUpdateOne) Mutation() *GameMoveMutation {
+// Mutation returns the MatchMoveMutation object of the builder.
+func (_u *MatchMoveUpdateOne) Mutation() *MatchMoveMutation {
 	return _u.mutation
 }
 
-// Where appends a list predicates to the GameMoveUpdate builder.
-func (_u *GameMoveUpdateOne) Where(ps ...predicate.GameMove) *GameMoveUpdateOne {
+// Where appends a list predicates to the MatchMoveUpdate builder.
+func (_u *MatchMoveUpdateOne) Where(ps ...predicate.MatchMove) *MatchMoveUpdateOne {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (_u *GameMoveUpdateOne) Select(field string, fields ...string) *GameMoveUpdateOne {
+func (_u *MatchMoveUpdateOne) Select(field string, fields ...string) *MatchMoveUpdateOne {
 	_u.fields = append([]string{field}, fields...)
 	return _u
 }
 
-// Save executes the query and returns the updated GameMove entity.
-func (_u *GameMoveUpdateOne) Save(ctx context.Context) (*GameMove, error) {
+// Save executes the query and returns the updated MatchMove entity.
+func (_u *MatchMoveUpdateOne) Save(ctx context.Context) (*MatchMove, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *GameMoveUpdateOne) SaveX(ctx context.Context) *GameMove {
+func (_u *MatchMoveUpdateOne) SaveX(ctx context.Context) *MatchMove {
 	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -161,52 +161,52 @@ func (_u *GameMoveUpdateOne) SaveX(ctx context.Context) *GameMove {
 }
 
 // Exec executes the query on the entity.
-func (_u *GameMoveUpdateOne) Exec(ctx context.Context) error {
+func (_u *MatchMoveUpdateOne) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *GameMoveUpdateOne) ExecX(ctx context.Context) {
+func (_u *MatchMoveUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *GameMoveUpdateOne) defaults() {
+func (_u *MatchMoveUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := gamemove.UpdateDefaultUpdatedAt()
+		v := matchmove.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *GameMoveUpdateOne) check() error {
-	if _u.mutation.GameCleared() && len(_u.mutation.GameIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "GameMove.game"`)
+func (_u *MatchMoveUpdateOne) check() error {
+	if _u.mutation.MatchCleared() && len(_u.mutation.MatchIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "MatchMove.match"`)
 	}
 	return nil
 }
 
-func (_u *GameMoveUpdateOne) sqlSave(ctx context.Context) (_node *GameMove, err error) {
+func (_u *MatchMoveUpdateOne) sqlSave(ctx context.Context) (_node *MatchMove, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(gamemove.Table, gamemove.Columns, sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(matchmove.Table, matchmove.Columns, sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "GameMove.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "MatchMove.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, gamemove.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, matchmove.FieldID)
 		for _, f := range fields {
-			if !gamemove.ValidColumn(f) {
+			if !matchmove.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != gamemove.FieldID {
+			if f != matchmove.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -219,17 +219,17 @@ func (_u *GameMoveUpdateOne) sqlSave(ctx context.Context) (_node *GameMove, err 
 		}
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(gamemove.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(matchmove.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if _u.mutation.PromotionCleared() {
-		_spec.ClearField(gamemove.FieldPromotion, field.TypeEnum)
+		_spec.ClearField(matchmove.FieldPromotion, field.TypeEnum)
 	}
-	_node = &GameMove{config: _u.config}
+	_node = &MatchMove{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{gamemove.Label}
+			err = &NotFoundError{matchmove.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

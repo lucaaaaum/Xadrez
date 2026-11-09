@@ -23,10 +23,10 @@ const (
 	FieldName = "name"
 	// EdgePassword holds the string denoting the password edge name in mutations.
 	EdgePassword = "password"
-	// EdgeWhiteGames holds the string denoting the white_games edge name in mutations.
-	EdgeWhiteGames = "white_games"
-	// EdgeBlackGames holds the string denoting the black_games edge name in mutations.
-	EdgeBlackGames = "black_games"
+	// EdgeAdministeredRooms holds the string denoting the administered_rooms edge name in mutations.
+	EdgeAdministeredRooms = "administered_rooms"
+	// EdgeParticipations holds the string denoting the participations edge name in mutations.
+	EdgeParticipations = "participations"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PasswordTable is the table that holds the password relation/edge.
@@ -36,20 +36,20 @@ const (
 	PasswordInverseTable = "user_passwords"
 	// PasswordColumn is the table column denoting the password relation/edge.
 	PasswordColumn = "user_id"
-	// WhiteGamesTable is the table that holds the white_games relation/edge.
-	WhiteGamesTable = "games"
-	// WhiteGamesInverseTable is the table name for the Game entity.
-	// It exists in this package in order to avoid circular dependency with the "game" package.
-	WhiteGamesInverseTable = "games"
-	// WhiteGamesColumn is the table column denoting the white_games relation/edge.
-	WhiteGamesColumn = "white_player_id"
-	// BlackGamesTable is the table that holds the black_games relation/edge.
-	BlackGamesTable = "games"
-	// BlackGamesInverseTable is the table name for the Game entity.
-	// It exists in this package in order to avoid circular dependency with the "game" package.
-	BlackGamesInverseTable = "games"
-	// BlackGamesColumn is the table column denoting the black_games relation/edge.
-	BlackGamesColumn = "black_player_id"
+	// AdministeredRoomsTable is the table that holds the administered_rooms relation/edge.
+	AdministeredRoomsTable = "game_rooms"
+	// AdministeredRoomsInverseTable is the table name for the GameRoom entity.
+	// It exists in this package in order to avoid circular dependency with the "gameroom" package.
+	AdministeredRoomsInverseTable = "game_rooms"
+	// AdministeredRoomsColumn is the table column denoting the administered_rooms relation/edge.
+	AdministeredRoomsColumn = "admin_id"
+	// ParticipationsTable is the table that holds the participations relation/edge.
+	ParticipationsTable = "participants"
+	// ParticipationsInverseTable is the table name for the Participant entity.
+	// It exists in this package in order to avoid circular dependency with the "participant" package.
+	ParticipationsInverseTable = "participants"
+	// ParticipationsColumn is the table column denoting the participations relation/edge.
+	ParticipationsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -113,31 +113,31 @@ func ByPasswordField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByWhiteGamesCount orders the results by white_games count.
-func ByWhiteGamesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByAdministeredRoomsCount orders the results by administered_rooms count.
+func ByAdministeredRoomsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newWhiteGamesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newAdministeredRoomsStep(), opts...)
 	}
 }
 
-// ByWhiteGames orders the results by white_games terms.
-func ByWhiteGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByAdministeredRooms orders the results by administered_rooms terms.
+func ByAdministeredRooms(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newWhiteGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newAdministeredRoomsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
-// ByBlackGamesCount orders the results by black_games count.
-func ByBlackGamesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByParticipationsCount orders the results by participations count.
+func ByParticipationsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newBlackGamesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newParticipationsStep(), opts...)
 	}
 }
 
-// ByBlackGames orders the results by black_games terms.
-func ByBlackGames(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByParticipations orders the results by participations terms.
+func ByParticipations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newBlackGamesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newParticipationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newPasswordStep() *sqlgraph.Step {
@@ -147,17 +147,17 @@ func newPasswordStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2O, false, PasswordTable, PasswordColumn),
 	)
 }
-func newWhiteGamesStep() *sqlgraph.Step {
+func newAdministeredRoomsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(WhiteGamesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, WhiteGamesTable, WhiteGamesColumn),
+		sqlgraph.To(AdministeredRoomsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AdministeredRoomsTable, AdministeredRoomsColumn),
 	)
 }
-func newBlackGamesStep() *sqlgraph.Step {
+func newParticipationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(BlackGamesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, BlackGamesTable, BlackGamesColumn),
+		sqlgraph.To(ParticipationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ParticipationsTable, ParticipationsColumn),
 	)
 }

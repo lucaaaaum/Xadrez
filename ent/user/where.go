@@ -239,21 +239,21 @@ func HasPasswordWith(preds ...predicate.UserPassword) predicate.User {
 	})
 }
 
-// HasWhiteGames applies the HasEdge predicate on the "white_games" edge.
-func HasWhiteGames() predicate.User {
+// HasAdministeredRooms applies the HasEdge predicate on the "administered_rooms" edge.
+func HasAdministeredRooms() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, WhiteGamesTable, WhiteGamesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, AdministeredRoomsTable, AdministeredRoomsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasWhiteGamesWith applies the HasEdge predicate on the "white_games" edge with a given conditions (other predicates).
-func HasWhiteGamesWith(preds ...predicate.Game) predicate.User {
+// HasAdministeredRoomsWith applies the HasEdge predicate on the "administered_rooms" edge with a given conditions (other predicates).
+func HasAdministeredRoomsWith(preds ...predicate.GameRoom) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newWhiteGamesStep()
+		step := newAdministeredRoomsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -262,21 +262,21 @@ func HasWhiteGamesWith(preds ...predicate.Game) predicate.User {
 	})
 }
 
-// HasBlackGames applies the HasEdge predicate on the "black_games" edge.
-func HasBlackGames() predicate.User {
+// HasParticipations applies the HasEdge predicate on the "participations" edge.
+func HasParticipations() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, BlackGamesTable, BlackGamesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ParticipationsTable, ParticipationsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasBlackGamesWith applies the HasEdge predicate on the "black_games" edge with a given conditions (other predicates).
-func HasBlackGamesWith(preds ...predicate.Game) predicate.User {
+// HasParticipationsWith applies the HasEdge predicate on the "participations" edge with a given conditions (other predicates).
+func HasParticipationsWith(preds ...predicate.Participant) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newBlackGamesStep()
+		step := newParticipationsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

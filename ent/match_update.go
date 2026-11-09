@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
 	"xadrez/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
@@ -17,47 +17,33 @@ import (
 	"github.com/google/uuid"
 )
 
-// GameUpdate is the builder for updating Game entities.
-type GameUpdate struct {
+// MatchUpdate is the builder for updating Match entities.
+type MatchUpdate struct {
 	config
 	hooks    []Hook
-	mutation *GameMutation
+	mutation *MatchMutation
 }
 
-// Where appends a list predicates to the GameUpdate builder.
-func (_u *GameUpdate) Where(ps ...predicate.Game) *GameUpdate {
+// Where appends a list predicates to the MatchUpdate builder.
+func (_u *MatchUpdate) Where(ps ...predicate.Match) *MatchUpdate {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *GameUpdate) SetUpdatedAt(v time.Time) *GameUpdate {
+func (_u *MatchUpdate) SetUpdatedAt(v time.Time) *MatchUpdate {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
-// SetStatus sets the "status" field.
-func (_u *GameUpdate) SetStatus(v game.Status) *GameUpdate {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *GameUpdate) SetNillableStatus(v *game.Status) *GameUpdate {
-	if v != nil {
-		_u.SetStatus(*v)
-	}
-	return _u
-}
-
 // SetResult sets the "result" field.
-func (_u *GameUpdate) SetResult(v game.Result) *GameUpdate {
+func (_u *MatchUpdate) SetResult(v match.Result) *MatchUpdate {
 	_u.mutation.SetResult(v)
 	return _u
 }
 
 // SetNillableResult sets the "result" field if the given value is not nil.
-func (_u *GameUpdate) SetNillableResult(v *game.Result) *GameUpdate {
+func (_u *MatchUpdate) SetNillableResult(v *match.Result) *MatchUpdate {
 	if v != nil {
 		_u.SetResult(*v)
 	}
@@ -65,19 +51,19 @@ func (_u *GameUpdate) SetNillableResult(v *game.Result) *GameUpdate {
 }
 
 // ClearResult clears the value of the "result" field.
-func (_u *GameUpdate) ClearResult() *GameUpdate {
+func (_u *MatchUpdate) ClearResult() *MatchUpdate {
 	_u.mutation.ClearResult()
 	return _u
 }
 
 // SetTermination sets the "termination" field.
-func (_u *GameUpdate) SetTermination(v game.Termination) *GameUpdate {
+func (_u *MatchUpdate) SetTermination(v match.Termination) *MatchUpdate {
 	_u.mutation.SetTermination(v)
 	return _u
 }
 
 // SetNillableTermination sets the "termination" field if the given value is not nil.
-func (_u *GameUpdate) SetNillableTermination(v *game.Termination) *GameUpdate {
+func (_u *MatchUpdate) SetNillableTermination(v *match.Termination) *MatchUpdate {
 	if v != nil {
 		_u.SetTermination(*v)
 	}
@@ -85,19 +71,19 @@ func (_u *GameUpdate) SetNillableTermination(v *game.Termination) *GameUpdate {
 }
 
 // ClearTermination clears the value of the "termination" field.
-func (_u *GameUpdate) ClearTermination() *GameUpdate {
+func (_u *MatchUpdate) ClearTermination() *MatchUpdate {
 	_u.mutation.ClearTermination()
 	return _u
 }
 
 // SetFinishedAt sets the "finished_at" field.
-func (_u *GameUpdate) SetFinishedAt(v time.Time) *GameUpdate {
+func (_u *MatchUpdate) SetFinishedAt(v time.Time) *MatchUpdate {
 	_u.mutation.SetFinishedAt(v)
 	return _u
 }
 
 // SetNillableFinishedAt sets the "finished_at" field if the given value is not nil.
-func (_u *GameUpdate) SetNillableFinishedAt(v *time.Time) *GameUpdate {
+func (_u *MatchUpdate) SetNillableFinishedAt(v *time.Time) *MatchUpdate {
 	if v != nil {
 		_u.SetFinishedAt(*v)
 	}
@@ -105,19 +91,19 @@ func (_u *GameUpdate) SetNillableFinishedAt(v *time.Time) *GameUpdate {
 }
 
 // ClearFinishedAt clears the value of the "finished_at" field.
-func (_u *GameUpdate) ClearFinishedAt() *GameUpdate {
+func (_u *MatchUpdate) ClearFinishedAt() *MatchUpdate {
 	_u.mutation.ClearFinishedAt()
 	return _u
 }
 
-// AddMoveIDs adds the "moves" edge to the GameMove entity by IDs.
-func (_u *GameUpdate) AddMoveIDs(ids ...uuid.UUID) *GameUpdate {
+// AddMoveIDs adds the "moves" edge to the MatchMove entity by IDs.
+func (_u *MatchUpdate) AddMoveIDs(ids ...uuid.UUID) *MatchUpdate {
 	_u.mutation.AddMoveIDs(ids...)
 	return _u
 }
 
-// AddMoves adds the "moves" edges to the GameMove entity.
-func (_u *GameUpdate) AddMoves(v ...*GameMove) *GameUpdate {
+// AddMoves adds the "moves" edges to the MatchMove entity.
+func (_u *MatchUpdate) AddMoves(v ...*MatchMove) *MatchUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -125,25 +111,25 @@ func (_u *GameUpdate) AddMoves(v ...*GameMove) *GameUpdate {
 	return _u.AddMoveIDs(ids...)
 }
 
-// Mutation returns the GameMutation object of the builder.
-func (_u *GameUpdate) Mutation() *GameMutation {
+// Mutation returns the MatchMutation object of the builder.
+func (_u *MatchUpdate) Mutation() *MatchMutation {
 	return _u.mutation
 }
 
-// ClearMoves clears all "moves" edges to the GameMove entity.
-func (_u *GameUpdate) ClearMoves() *GameUpdate {
+// ClearMoves clears all "moves" edges to the MatchMove entity.
+func (_u *MatchUpdate) ClearMoves() *MatchUpdate {
 	_u.mutation.ClearMoves()
 	return _u
 }
 
-// RemoveMoveIDs removes the "moves" edge to GameMove entities by IDs.
-func (_u *GameUpdate) RemoveMoveIDs(ids ...uuid.UUID) *GameUpdate {
+// RemoveMoveIDs removes the "moves" edge to MatchMove entities by IDs.
+func (_u *MatchUpdate) RemoveMoveIDs(ids ...uuid.UUID) *MatchUpdate {
 	_u.mutation.RemoveMoveIDs(ids...)
 	return _u
 }
 
-// RemoveMoves removes "moves" edges to GameMove entities.
-func (_u *GameUpdate) RemoveMoves(v ...*GameMove) *GameUpdate {
+// RemoveMoves removes "moves" edges to MatchMove entities.
+func (_u *MatchUpdate) RemoveMoves(v ...*MatchMove) *MatchUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -152,13 +138,13 @@ func (_u *GameUpdate) RemoveMoves(v ...*GameMove) *GameUpdate {
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (_u *GameUpdate) Save(ctx context.Context) (int, error) {
+func (_u *MatchUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *GameUpdate) SaveX(ctx context.Context) int {
+func (_u *MatchUpdate) SaveX(ctx context.Context) int {
 	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -167,57 +153,55 @@ func (_u *GameUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (_u *GameUpdate) Exec(ctx context.Context) error {
+func (_u *MatchUpdate) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *GameUpdate) ExecX(ctx context.Context) {
+func (_u *MatchUpdate) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *GameUpdate) defaults() {
+func (_u *MatchUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := game.UpdateDefaultUpdatedAt()
+		v := match.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *GameUpdate) check() error {
-	if v, ok := _u.mutation.Status(); ok {
-		if err := game.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Game.status": %w`, err)}
-		}
-	}
+func (_u *MatchUpdate) check() error {
 	if v, ok := _u.mutation.Result(); ok {
-		if err := game.ResultValidator(v); err != nil {
-			return &ValidationError{Name: "result", err: fmt.Errorf(`ent: validator failed for field "Game.result": %w`, err)}
+		if err := match.ResultValidator(v); err != nil {
+			return &ValidationError{Name: "result", err: fmt.Errorf(`ent: validator failed for field "Match.result": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Termination(); ok {
-		if err := game.TerminationValidator(v); err != nil {
-			return &ValidationError{Name: "termination", err: fmt.Errorf(`ent: validator failed for field "Game.termination": %w`, err)}
+		if err := match.TerminationValidator(v); err != nil {
+			return &ValidationError{Name: "termination", err: fmt.Errorf(`ent: validator failed for field "Match.termination": %w`, err)}
 		}
 	}
+	if _u.mutation.RoomCleared() && len(_u.mutation.RoomIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Match.room"`)
+	}
 	if _u.mutation.WhitePlayerCleared() && len(_u.mutation.WhitePlayerIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Game.white_player"`)
+		return errors.New(`ent: clearing a required unique edge "Match.white_player"`)
 	}
 	if _u.mutation.BlackPlayerCleared() && len(_u.mutation.BlackPlayerIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Game.black_player"`)
+		return errors.New(`ent: clearing a required unique edge "Match.black_player"`)
 	}
 	return nil
 }
 
-func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+func (_u *MatchUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(game.Table, game.Columns, sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(match.Table, match.Columns, sqlgraph.NewFieldSpec(match.FieldID, field.TypeUUID))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -226,38 +210,35 @@ func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(game.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(game.FieldStatus, field.TypeEnum, value)
+		_spec.SetField(match.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Result(); ok {
-		_spec.SetField(game.FieldResult, field.TypeEnum, value)
+		_spec.SetField(match.FieldResult, field.TypeEnum, value)
 	}
 	if _u.mutation.ResultCleared() {
-		_spec.ClearField(game.FieldResult, field.TypeEnum)
+		_spec.ClearField(match.FieldResult, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.Termination(); ok {
-		_spec.SetField(game.FieldTermination, field.TypeEnum, value)
+		_spec.SetField(match.FieldTermination, field.TypeEnum, value)
 	}
 	if _u.mutation.TerminationCleared() {
-		_spec.ClearField(game.FieldTermination, field.TypeEnum)
+		_spec.ClearField(match.FieldTermination, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.FinishedAt(); ok {
-		_spec.SetField(game.FieldFinishedAt, field.TypeTime, value)
+		_spec.SetField(match.FieldFinishedAt, field.TypeTime, value)
 	}
 	if _u.mutation.FinishedAtCleared() {
-		_spec.ClearField(game.FieldFinishedAt, field.TypeTime)
+		_spec.ClearField(match.FieldFinishedAt, field.TypeTime)
 	}
 	if _u.mutation.MovesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -266,11 +247,11 @@ func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -282,11 +263,11 @@ func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -296,7 +277,7 @@ func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{game.Label}
+			err = &NotFoundError{match.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -306,42 +287,28 @@ func (_u *GameUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	return _node, nil
 }
 
-// GameUpdateOne is the builder for updating a single Game entity.
-type GameUpdateOne struct {
+// MatchUpdateOne is the builder for updating a single Match entity.
+type MatchUpdateOne struct {
 	config
 	fields   []string
 	hooks    []Hook
-	mutation *GameMutation
+	mutation *MatchMutation
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (_u *GameUpdateOne) SetUpdatedAt(v time.Time) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetUpdatedAt(v time.Time) *MatchUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
 	return _u
 }
 
-// SetStatus sets the "status" field.
-func (_u *GameUpdateOne) SetStatus(v game.Status) *GameUpdateOne {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *GameUpdateOne) SetNillableStatus(v *game.Status) *GameUpdateOne {
-	if v != nil {
-		_u.SetStatus(*v)
-	}
-	return _u
-}
-
 // SetResult sets the "result" field.
-func (_u *GameUpdateOne) SetResult(v game.Result) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetResult(v match.Result) *MatchUpdateOne {
 	_u.mutation.SetResult(v)
 	return _u
 }
 
 // SetNillableResult sets the "result" field if the given value is not nil.
-func (_u *GameUpdateOne) SetNillableResult(v *game.Result) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetNillableResult(v *match.Result) *MatchUpdateOne {
 	if v != nil {
 		_u.SetResult(*v)
 	}
@@ -349,19 +316,19 @@ func (_u *GameUpdateOne) SetNillableResult(v *game.Result) *GameUpdateOne {
 }
 
 // ClearResult clears the value of the "result" field.
-func (_u *GameUpdateOne) ClearResult() *GameUpdateOne {
+func (_u *MatchUpdateOne) ClearResult() *MatchUpdateOne {
 	_u.mutation.ClearResult()
 	return _u
 }
 
 // SetTermination sets the "termination" field.
-func (_u *GameUpdateOne) SetTermination(v game.Termination) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetTermination(v match.Termination) *MatchUpdateOne {
 	_u.mutation.SetTermination(v)
 	return _u
 }
 
 // SetNillableTermination sets the "termination" field if the given value is not nil.
-func (_u *GameUpdateOne) SetNillableTermination(v *game.Termination) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetNillableTermination(v *match.Termination) *MatchUpdateOne {
 	if v != nil {
 		_u.SetTermination(*v)
 	}
@@ -369,19 +336,19 @@ func (_u *GameUpdateOne) SetNillableTermination(v *game.Termination) *GameUpdate
 }
 
 // ClearTermination clears the value of the "termination" field.
-func (_u *GameUpdateOne) ClearTermination() *GameUpdateOne {
+func (_u *MatchUpdateOne) ClearTermination() *MatchUpdateOne {
 	_u.mutation.ClearTermination()
 	return _u
 }
 
 // SetFinishedAt sets the "finished_at" field.
-func (_u *GameUpdateOne) SetFinishedAt(v time.Time) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetFinishedAt(v time.Time) *MatchUpdateOne {
 	_u.mutation.SetFinishedAt(v)
 	return _u
 }
 
 // SetNillableFinishedAt sets the "finished_at" field if the given value is not nil.
-func (_u *GameUpdateOne) SetNillableFinishedAt(v *time.Time) *GameUpdateOne {
+func (_u *MatchUpdateOne) SetNillableFinishedAt(v *time.Time) *MatchUpdateOne {
 	if v != nil {
 		_u.SetFinishedAt(*v)
 	}
@@ -389,19 +356,19 @@ func (_u *GameUpdateOne) SetNillableFinishedAt(v *time.Time) *GameUpdateOne {
 }
 
 // ClearFinishedAt clears the value of the "finished_at" field.
-func (_u *GameUpdateOne) ClearFinishedAt() *GameUpdateOne {
+func (_u *MatchUpdateOne) ClearFinishedAt() *MatchUpdateOne {
 	_u.mutation.ClearFinishedAt()
 	return _u
 }
 
-// AddMoveIDs adds the "moves" edge to the GameMove entity by IDs.
-func (_u *GameUpdateOne) AddMoveIDs(ids ...uuid.UUID) *GameUpdateOne {
+// AddMoveIDs adds the "moves" edge to the MatchMove entity by IDs.
+func (_u *MatchUpdateOne) AddMoveIDs(ids ...uuid.UUID) *MatchUpdateOne {
 	_u.mutation.AddMoveIDs(ids...)
 	return _u
 }
 
-// AddMoves adds the "moves" edges to the GameMove entity.
-func (_u *GameUpdateOne) AddMoves(v ...*GameMove) *GameUpdateOne {
+// AddMoves adds the "moves" edges to the MatchMove entity.
+func (_u *MatchUpdateOne) AddMoves(v ...*MatchMove) *MatchUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -409,25 +376,25 @@ func (_u *GameUpdateOne) AddMoves(v ...*GameMove) *GameUpdateOne {
 	return _u.AddMoveIDs(ids...)
 }
 
-// Mutation returns the GameMutation object of the builder.
-func (_u *GameUpdateOne) Mutation() *GameMutation {
+// Mutation returns the MatchMutation object of the builder.
+func (_u *MatchUpdateOne) Mutation() *MatchMutation {
 	return _u.mutation
 }
 
-// ClearMoves clears all "moves" edges to the GameMove entity.
-func (_u *GameUpdateOne) ClearMoves() *GameUpdateOne {
+// ClearMoves clears all "moves" edges to the MatchMove entity.
+func (_u *MatchUpdateOne) ClearMoves() *MatchUpdateOne {
 	_u.mutation.ClearMoves()
 	return _u
 }
 
-// RemoveMoveIDs removes the "moves" edge to GameMove entities by IDs.
-func (_u *GameUpdateOne) RemoveMoveIDs(ids ...uuid.UUID) *GameUpdateOne {
+// RemoveMoveIDs removes the "moves" edge to MatchMove entities by IDs.
+func (_u *MatchUpdateOne) RemoveMoveIDs(ids ...uuid.UUID) *MatchUpdateOne {
 	_u.mutation.RemoveMoveIDs(ids...)
 	return _u
 }
 
-// RemoveMoves removes "moves" edges to GameMove entities.
-func (_u *GameUpdateOne) RemoveMoves(v ...*GameMove) *GameUpdateOne {
+// RemoveMoves removes "moves" edges to MatchMove entities.
+func (_u *MatchUpdateOne) RemoveMoves(v ...*MatchMove) *MatchUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -435,27 +402,27 @@ func (_u *GameUpdateOne) RemoveMoves(v ...*GameMove) *GameUpdateOne {
 	return _u.RemoveMoveIDs(ids...)
 }
 
-// Where appends a list predicates to the GameUpdate builder.
-func (_u *GameUpdateOne) Where(ps ...predicate.Game) *GameUpdateOne {
+// Where appends a list predicates to the MatchUpdate builder.
+func (_u *MatchUpdateOne) Where(ps ...predicate.Match) *MatchUpdateOne {
 	_u.mutation.Where(ps...)
 	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (_u *GameUpdateOne) Select(field string, fields ...string) *GameUpdateOne {
+func (_u *MatchUpdateOne) Select(field string, fields ...string) *MatchUpdateOne {
 	_u.fields = append([]string{field}, fields...)
 	return _u
 }
 
-// Save executes the query and returns the updated Game entity.
-func (_u *GameUpdateOne) Save(ctx context.Context) (*Game, error) {
+// Save executes the query and returns the updated Match entity.
+func (_u *MatchUpdateOne) Save(ctx context.Context) (*Match, error) {
 	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (_u *GameUpdateOne) SaveX(ctx context.Context) *Game {
+func (_u *MatchUpdateOne) SaveX(ctx context.Context) *Match {
 	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -464,70 +431,68 @@ func (_u *GameUpdateOne) SaveX(ctx context.Context) *Game {
 }
 
 // Exec executes the query on the entity.
-func (_u *GameUpdateOne) Exec(ctx context.Context) error {
+func (_u *MatchUpdateOne) Exec(ctx context.Context) error {
 	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_u *GameUpdateOne) ExecX(ctx context.Context) {
+func (_u *MatchUpdateOne) ExecX(ctx context.Context) {
 	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *GameUpdateOne) defaults() {
+func (_u *MatchUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		v := game.UpdateDefaultUpdatedAt()
+		v := match.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (_u *GameUpdateOne) check() error {
-	if v, ok := _u.mutation.Status(); ok {
-		if err := game.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Game.status": %w`, err)}
-		}
-	}
+func (_u *MatchUpdateOne) check() error {
 	if v, ok := _u.mutation.Result(); ok {
-		if err := game.ResultValidator(v); err != nil {
-			return &ValidationError{Name: "result", err: fmt.Errorf(`ent: validator failed for field "Game.result": %w`, err)}
+		if err := match.ResultValidator(v); err != nil {
+			return &ValidationError{Name: "result", err: fmt.Errorf(`ent: validator failed for field "Match.result": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Termination(); ok {
-		if err := game.TerminationValidator(v); err != nil {
-			return &ValidationError{Name: "termination", err: fmt.Errorf(`ent: validator failed for field "Game.termination": %w`, err)}
+		if err := match.TerminationValidator(v); err != nil {
+			return &ValidationError{Name: "termination", err: fmt.Errorf(`ent: validator failed for field "Match.termination": %w`, err)}
 		}
 	}
+	if _u.mutation.RoomCleared() && len(_u.mutation.RoomIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Match.room"`)
+	}
 	if _u.mutation.WhitePlayerCleared() && len(_u.mutation.WhitePlayerIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Game.white_player"`)
+		return errors.New(`ent: clearing a required unique edge "Match.white_player"`)
 	}
 	if _u.mutation.BlackPlayerCleared() && len(_u.mutation.BlackPlayerIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Game.black_player"`)
+		return errors.New(`ent: clearing a required unique edge "Match.black_player"`)
 	}
 	return nil
 }
 
-func (_u *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) {
+func (_u *MatchUpdateOne) sqlSave(ctx context.Context) (_node *Match, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(game.Table, game.Columns, sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(match.Table, match.Columns, sqlgraph.NewFieldSpec(match.FieldID, field.TypeUUID))
 	id, ok := _u.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Game.id" for update`)}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Match.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
 	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, game.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, match.FieldID)
 		for _, f := range fields {
-			if !game.ValidColumn(f) {
+			if !match.ValidColumn(f) {
 				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 			}
-			if f != game.FieldID {
+			if f != match.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, f)
 			}
 		}
@@ -540,38 +505,35 @@ func (_u *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) {
 		}
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
-		_spec.SetField(game.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(game.FieldStatus, field.TypeEnum, value)
+		_spec.SetField(match.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := _u.mutation.Result(); ok {
-		_spec.SetField(game.FieldResult, field.TypeEnum, value)
+		_spec.SetField(match.FieldResult, field.TypeEnum, value)
 	}
 	if _u.mutation.ResultCleared() {
-		_spec.ClearField(game.FieldResult, field.TypeEnum)
+		_spec.ClearField(match.FieldResult, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.Termination(); ok {
-		_spec.SetField(game.FieldTermination, field.TypeEnum, value)
+		_spec.SetField(match.FieldTermination, field.TypeEnum, value)
 	}
 	if _u.mutation.TerminationCleared() {
-		_spec.ClearField(game.FieldTermination, field.TypeEnum)
+		_spec.ClearField(match.FieldTermination, field.TypeEnum)
 	}
 	if value, ok := _u.mutation.FinishedAt(); ok {
-		_spec.SetField(game.FieldFinishedAt, field.TypeTime, value)
+		_spec.SetField(match.FieldFinishedAt, field.TypeTime, value)
 	}
 	if _u.mutation.FinishedAtCleared() {
-		_spec.ClearField(game.FieldFinishedAt, field.TypeTime)
+		_spec.ClearField(match.FieldFinishedAt, field.TypeTime)
 	}
 	if _u.mutation.MovesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -580,11 +542,11 @@ func (_u *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -596,11 +558,11 @@ func (_u *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   game.MovesTable,
-			Columns: []string{game.MovesColumn},
+			Table:   match.MovesTable,
+			Columns: []string{match.MovesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(gamemove.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(matchmove.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -608,12 +570,12 @@ func (_u *GameUpdateOne) sqlSave(ctx context.Context) (_node *Game, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Game{config: _u.config}
+	_node = &Match{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
-			err = &NotFoundError{game.Label}
+			err = &NotFoundError{match.Label}
 		} else if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}

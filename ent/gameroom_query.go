@@ -7,8 +7,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"math"
-	"xadrez/ent/game"
-	"xadrez/ent/gamemove"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/match"
+	"xadrez/ent/participant"
 	"xadrez/ent/predicate"
 	"xadrez/ent/user"
 
@@ -19,54 +20,54 @@ import (
 	"github.com/google/uuid"
 )
 
-// GameQuery is the builder for querying Game entities.
-type GameQuery struct {
+// GameRoomQuery is the builder for querying GameRoom entities.
+type GameRoomQuery struct {
 	config
-	ctx             *QueryContext
-	order           []game.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.Game
-	withWhitePlayer *UserQuery
-	withBlackPlayer *UserQuery
-	withMoves       *GameMoveQuery
+	ctx              *QueryContext
+	order            []gameroom.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.GameRoom
+	withAdmin        *UserQuery
+	withParticipants *ParticipantQuery
+	withMatches      *MatchQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the GameQuery builder.
-func (_q *GameQuery) Where(ps ...predicate.Game) *GameQuery {
+// Where adds a new predicate for the GameRoomQuery builder.
+func (_q *GameRoomQuery) Where(ps ...predicate.GameRoom) *GameRoomQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *GameQuery) Limit(limit int) *GameQuery {
+func (_q *GameRoomQuery) Limit(limit int) *GameRoomQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *GameQuery) Offset(offset int) *GameQuery {
+func (_q *GameRoomQuery) Offset(offset int) *GameRoomQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *GameQuery) Unique(unique bool) *GameQuery {
+func (_q *GameRoomQuery) Unique(unique bool) *GameRoomQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *GameQuery) Order(o ...game.OrderOption) *GameQuery {
+func (_q *GameRoomQuery) Order(o ...gameroom.OrderOption) *GameRoomQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryWhitePlayer chains the current query on the "white_player" edge.
-func (_q *GameQuery) QueryWhitePlayer() *UserQuery {
+// QueryAdmin chains the current query on the "admin" edge.
+func (_q *GameRoomQuery) QueryAdmin() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -77,9 +78,9 @@ func (_q *GameQuery) QueryWhitePlayer() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(game.Table, game.FieldID, selector),
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, game.WhitePlayerTable, game.WhitePlayerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, gameroom.AdminTable, gameroom.AdminColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -87,9 +88,9 @@ func (_q *GameQuery) QueryWhitePlayer() *UserQuery {
 	return query
 }
 
-// QueryBlackPlayer chains the current query on the "black_player" edge.
-func (_q *GameQuery) QueryBlackPlayer() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// QueryParticipants chains the current query on the "participants" edge.
+func (_q *GameRoomQuery) QueryParticipants() *ParticipantQuery {
+	query := (&ParticipantClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -99,9 +100,9 @@ func (_q *GameQuery) QueryBlackPlayer() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(game.Table, game.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, game.BlackPlayerTable, game.BlackPlayerColumn),
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, selector),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameroom.ParticipantsTable, gameroom.ParticipantsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -109,9 +110,9 @@ func (_q *GameQuery) QueryBlackPlayer() *UserQuery {
 	return query
 }
 
-// QueryMoves chains the current query on the "moves" edge.
-func (_q *GameQuery) QueryMoves() *GameMoveQuery {
-	query := (&GameMoveClient{config: _q.config}).Query()
+// QueryMatches chains the current query on the "matches" edge.
+func (_q *GameRoomQuery) QueryMatches() *MatchQuery {
+	query := (&MatchClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -121,9 +122,9 @@ func (_q *GameQuery) QueryMoves() *GameMoveQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(game.Table, game.FieldID, selector),
-			sqlgraph.To(gamemove.Table, gamemove.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, game.MovesTable, game.MovesColumn),
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, selector),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameroom.MatchesTable, gameroom.MatchesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -131,21 +132,21 @@ func (_q *GameQuery) QueryMoves() *GameMoveQuery {
 	return query
 }
 
-// First returns the first Game entity from the query.
-// Returns a *NotFoundError when no Game was found.
-func (_q *GameQuery) First(ctx context.Context) (*Game, error) {
+// First returns the first GameRoom entity from the query.
+// Returns a *NotFoundError when no GameRoom was found.
+func (_q *GameRoomQuery) First(ctx context.Context) (*GameRoom, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{game.Label}
+		return nil, &NotFoundError{gameroom.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *GameQuery) FirstX(ctx context.Context) *Game {
+func (_q *GameRoomQuery) FirstX(ctx context.Context) *GameRoom {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -153,22 +154,22 @@ func (_q *GameQuery) FirstX(ctx context.Context) *Game {
 	return node
 }
 
-// FirstID returns the first Game ID from the query.
-// Returns a *NotFoundError when no Game ID was found.
-func (_q *GameQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first GameRoom ID from the query.
+// Returns a *NotFoundError when no GameRoom ID was found.
+func (_q *GameRoomQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{game.Label}
+		err = &NotFoundError{gameroom.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *GameQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *GameRoomQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -176,10 +177,10 @@ func (_q *GameQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Game entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Game entity is found.
-// Returns a *NotFoundError when no Game entities are found.
-func (_q *GameQuery) Only(ctx context.Context) (*Game, error) {
+// Only returns a single GameRoom entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one GameRoom entity is found.
+// Returns a *NotFoundError when no GameRoom entities are found.
+func (_q *GameRoomQuery) Only(ctx context.Context) (*GameRoom, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -188,14 +189,14 @@ func (_q *GameQuery) Only(ctx context.Context) (*Game, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{game.Label}
+		return nil, &NotFoundError{gameroom.Label}
 	default:
-		return nil, &NotSingularError{game.Label}
+		return nil, &NotSingularError{gameroom.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *GameQuery) OnlyX(ctx context.Context) *Game {
+func (_q *GameRoomQuery) OnlyX(ctx context.Context) *GameRoom {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -203,10 +204,10 @@ func (_q *GameQuery) OnlyX(ctx context.Context) *Game {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Game ID in the query.
-// Returns a *NotSingularError when more than one Game ID is found.
+// OnlyID is like Only, but returns the only GameRoom ID in the query.
+// Returns a *NotSingularError when more than one GameRoom ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *GameQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *GameRoomQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -215,15 +216,15 @@ func (_q *GameQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{game.Label}
+		err = &NotFoundError{gameroom.Label}
 	default:
-		err = &NotSingularError{game.Label}
+		err = &NotSingularError{gameroom.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *GameQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *GameRoomQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -231,18 +232,18 @@ func (_q *GameQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Games.
-func (_q *GameQuery) All(ctx context.Context) ([]*Game, error) {
+// All executes the query and returns a list of GameRooms.
+func (_q *GameRoomQuery) All(ctx context.Context) ([]*GameRoom, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Game, *GameQuery]()
-	return withInterceptors[[]*Game](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*GameRoom, *GameRoomQuery]()
+	return withInterceptors[[]*GameRoom](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *GameQuery) AllX(ctx context.Context) []*Game {
+func (_q *GameRoomQuery) AllX(ctx context.Context) []*GameRoom {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -250,20 +251,20 @@ func (_q *GameQuery) AllX(ctx context.Context) []*Game {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Game IDs.
-func (_q *GameQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of GameRoom IDs.
+func (_q *GameRoomQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(game.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(gameroom.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *GameQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *GameRoomQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -272,16 +273,16 @@ func (_q *GameQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *GameQuery) Count(ctx context.Context) (int, error) {
+func (_q *GameRoomQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*GameQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*GameRoomQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *GameQuery) CountX(ctx context.Context) int {
+func (_q *GameRoomQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -290,7 +291,7 @@ func (_q *GameQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *GameQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *GameRoomQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -303,7 +304,7 @@ func (_q *GameQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *GameQuery) ExistX(ctx context.Context) bool {
+func (_q *GameRoomQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -311,57 +312,57 @@ func (_q *GameQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the GameQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the GameRoomQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *GameQuery) Clone() *GameQuery {
+func (_q *GameRoomQuery) Clone() *GameRoomQuery {
 	if _q == nil {
 		return nil
 	}
-	return &GameQuery{
-		config:          _q.config,
-		ctx:             _q.ctx.Clone(),
-		order:           append([]game.OrderOption{}, _q.order...),
-		inters:          append([]Interceptor{}, _q.inters...),
-		predicates:      append([]predicate.Game{}, _q.predicates...),
-		withWhitePlayer: _q.withWhitePlayer.Clone(),
-		withBlackPlayer: _q.withBlackPlayer.Clone(),
-		withMoves:       _q.withMoves.Clone(),
+	return &GameRoomQuery{
+		config:           _q.config,
+		ctx:              _q.ctx.Clone(),
+		order:            append([]gameroom.OrderOption{}, _q.order...),
+		inters:           append([]Interceptor{}, _q.inters...),
+		predicates:       append([]predicate.GameRoom{}, _q.predicates...),
+		withAdmin:        _q.withAdmin.Clone(),
+		withParticipants: _q.withParticipants.Clone(),
+		withMatches:      _q.withMatches.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithWhitePlayer tells the query-builder to eager-load the nodes that are connected to
-// the "white_player" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *GameQuery) WithWhitePlayer(opts ...func(*UserQuery)) *GameQuery {
+// WithAdmin tells the query-builder to eager-load the nodes that are connected to
+// the "admin" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *GameRoomQuery) WithAdmin(opts ...func(*UserQuery)) *GameRoomQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withWhitePlayer = query
+	_q.withAdmin = query
 	return _q
 }
 
-// WithBlackPlayer tells the query-builder to eager-load the nodes that are connected to
-// the "black_player" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *GameQuery) WithBlackPlayer(opts ...func(*UserQuery)) *GameQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// WithParticipants tells the query-builder to eager-load the nodes that are connected to
+// the "participants" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *GameRoomQuery) WithParticipants(opts ...func(*ParticipantQuery)) *GameRoomQuery {
+	query := (&ParticipantClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withBlackPlayer = query
+	_q.withParticipants = query
 	return _q
 }
 
-// WithMoves tells the query-builder to eager-load the nodes that are connected to
-// the "moves" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *GameQuery) WithMoves(opts ...func(*GameMoveQuery)) *GameQuery {
-	query := (&GameMoveClient{config: _q.config}).Query()
+// WithMatches tells the query-builder to eager-load the nodes that are connected to
+// the "matches" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *GameRoomQuery) WithMatches(opts ...func(*MatchQuery)) *GameRoomQuery {
+	query := (&MatchClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withMoves = query
+	_q.withMatches = query
 	return _q
 }
 
@@ -375,15 +376,15 @@ func (_q *GameQuery) WithMoves(opts ...func(*GameMoveQuery)) *GameQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Game.Query().
-//		GroupBy(game.FieldCreatedAt).
+//	client.GameRoom.Query().
+//		GroupBy(gameroom.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *GameQuery) GroupBy(field string, fields ...string) *GameGroupBy {
+func (_q *GameRoomQuery) GroupBy(field string, fields ...string) *GameRoomGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &GameGroupBy{build: _q}
+	grbuild := &GameRoomGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = game.Label
+	grbuild.label = gameroom.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -397,23 +398,23 @@ func (_q *GameQuery) GroupBy(field string, fields ...string) *GameGroupBy {
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.Game.Query().
-//		Select(game.FieldCreatedAt).
+//	client.GameRoom.Query().
+//		Select(gameroom.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *GameQuery) Select(fields ...string) *GameSelect {
+func (_q *GameRoomQuery) Select(fields ...string) *GameRoomSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &GameSelect{GameQuery: _q}
-	sbuild.label = game.Label
+	sbuild := &GameRoomSelect{GameRoomQuery: _q}
+	sbuild.label = gameroom.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a GameSelect configured with the given aggregations.
-func (_q *GameQuery) Aggregate(fns ...AggregateFunc) *GameSelect {
+// Aggregate returns a GameRoomSelect configured with the given aggregations.
+func (_q *GameRoomQuery) Aggregate(fns ...AggregateFunc) *GameRoomSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *GameQuery) prepareQuery(ctx context.Context) error {
+func (_q *GameRoomQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -425,7 +426,7 @@ func (_q *GameQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !game.ValidColumn(f) {
+		if !gameroom.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -439,21 +440,21 @@ func (_q *GameQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *GameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Game, error) {
+func (_q *GameRoomQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GameRoom, error) {
 	var (
-		nodes       = []*Game{}
+		nodes       = []*GameRoom{}
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
-			_q.withWhitePlayer != nil,
-			_q.withBlackPlayer != nil,
-			_q.withMoves != nil,
+			_q.withAdmin != nil,
+			_q.withParticipants != nil,
+			_q.withMatches != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Game).scanValues(nil, columns)
+		return (*GameRoom).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Game{config: _q.config}
+		node := &GameRoom{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -467,33 +468,34 @@ func (_q *GameQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Game, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withWhitePlayer; query != nil {
-		if err := _q.loadWhitePlayer(ctx, query, nodes, nil,
-			func(n *Game, e *User) { n.Edges.WhitePlayer = e }); err != nil {
+	if query := _q.withAdmin; query != nil {
+		if err := _q.loadAdmin(ctx, query, nodes, nil,
+			func(n *GameRoom, e *User) { n.Edges.Admin = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withBlackPlayer; query != nil {
-		if err := _q.loadBlackPlayer(ctx, query, nodes, nil,
-			func(n *Game, e *User) { n.Edges.BlackPlayer = e }); err != nil {
+	if query := _q.withParticipants; query != nil {
+		if err := _q.loadParticipants(ctx, query, nodes,
+			func(n *GameRoom) { n.Edges.Participants = []*Participant{} },
+			func(n *GameRoom, e *Participant) { n.Edges.Participants = append(n.Edges.Participants, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withMoves; query != nil {
-		if err := _q.loadMoves(ctx, query, nodes,
-			func(n *Game) { n.Edges.Moves = []*GameMove{} },
-			func(n *Game, e *GameMove) { n.Edges.Moves = append(n.Edges.Moves, e) }); err != nil {
+	if query := _q.withMatches; query != nil {
+		if err := _q.loadMatches(ctx, query, nodes,
+			func(n *GameRoom) { n.Edges.Matches = []*Match{} },
+			func(n *GameRoom, e *Match) { n.Edges.Matches = append(n.Edges.Matches, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *GameQuery) loadWhitePlayer(ctx context.Context, query *UserQuery, nodes []*Game, init func(*Game), assign func(*Game, *User)) error {
+func (_q *GameRoomQuery) loadAdmin(ctx context.Context, query *UserQuery, nodes []*GameRoom, init func(*GameRoom), assign func(*GameRoom, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Game)
+	nodeids := make(map[uuid.UUID][]*GameRoom)
 	for i := range nodes {
-		fk := nodes[i].WhitePlayerID
+		fk := nodes[i].AdminID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -510,7 +512,7 @@ func (_q *GameQuery) loadWhitePlayer(ctx context.Context, query *UserQuery, node
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "white_player_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "admin_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -518,38 +520,9 @@ func (_q *GameQuery) loadWhitePlayer(ctx context.Context, query *UserQuery, node
 	}
 	return nil
 }
-func (_q *GameQuery) loadBlackPlayer(ctx context.Context, query *UserQuery, nodes []*Game, init func(*Game), assign func(*Game, *User)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Game)
-	for i := range nodes {
-		fk := nodes[i].BlackPlayerID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "black_player_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *GameQuery) loadMoves(ctx context.Context, query *GameMoveQuery, nodes []*Game, init func(*Game), assign func(*Game, *GameMove)) error {
+func (_q *GameRoomQuery) loadParticipants(ctx context.Context, query *ParticipantQuery, nodes []*GameRoom, init func(*GameRoom), assign func(*GameRoom, *Participant)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Game)
+	nodeids := make(map[uuid.UUID]*GameRoom)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -558,27 +531,57 @@ func (_q *GameQuery) loadMoves(ctx context.Context, query *GameMoveQuery, nodes 
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(gamemove.FieldGameID)
+		query.ctx.AppendFieldOnce(participant.FieldRoomID)
 	}
-	query.Where(predicate.GameMove(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(game.MovesColumn), fks...))
+	query.Where(predicate.Participant(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(gameroom.ParticipantsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.GameID
+		fk := n.RoomID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "game_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "room_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *GameRoomQuery) loadMatches(ctx context.Context, query *MatchQuery, nodes []*GameRoom, init func(*GameRoom), assign func(*GameRoom, *Match)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*GameRoom)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(match.FieldRoomID)
+	}
+	query.Where(predicate.Match(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(gameroom.MatchesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.RoomID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "room_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *GameQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *GameRoomQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -587,8 +590,8 @@ func (_q *GameQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *GameQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(game.Table, game.Columns, sqlgraph.NewFieldSpec(game.FieldID, field.TypeUUID))
+func (_q *GameRoomQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(gameroom.Table, gameroom.Columns, sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -597,17 +600,14 @@ func (_q *GameQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, game.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, gameroom.FieldID)
 		for i := range fields {
-			if fields[i] != game.FieldID {
+			if fields[i] != gameroom.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withWhitePlayer != nil {
-			_spec.Node.AddColumnOnce(game.FieldWhitePlayerID)
-		}
-		if _q.withBlackPlayer != nil {
-			_spec.Node.AddColumnOnce(game.FieldBlackPlayerID)
+		if _q.withAdmin != nil {
+			_spec.Node.AddColumnOnce(gameroom.FieldAdminID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -633,12 +633,12 @@ func (_q *GameQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *GameQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *GameRoomQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(game.Table)
+	t1 := builder.Table(gameroom.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = game.Columns
+		columns = gameroom.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -665,28 +665,28 @@ func (_q *GameQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// GameGroupBy is the group-by builder for Game entities.
-type GameGroupBy struct {
+// GameRoomGroupBy is the group-by builder for GameRoom entities.
+type GameRoomGroupBy struct {
 	selector
-	build *GameQuery
+	build *GameRoomQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *GameGroupBy) Aggregate(fns ...AggregateFunc) *GameGroupBy {
+func (_g *GameRoomGroupBy) Aggregate(fns ...AggregateFunc) *GameRoomGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *GameGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *GameRoomGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GameQuery, *GameGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*GameRoomQuery, *GameRoomGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *GameGroupBy) sqlScan(ctx context.Context, root *GameQuery, v any) error {
+func (_g *GameRoomGroupBy) sqlScan(ctx context.Context, root *GameRoomQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -713,28 +713,28 @@ func (_g *GameGroupBy) sqlScan(ctx context.Context, root *GameQuery, v any) erro
 	return sql.ScanSlice(rows, v)
 }
 
-// GameSelect is the builder for selecting fields of Game entities.
-type GameSelect struct {
-	*GameQuery
+// GameRoomSelect is the builder for selecting fields of GameRoom entities.
+type GameRoomSelect struct {
+	*GameRoomQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *GameSelect) Aggregate(fns ...AggregateFunc) *GameSelect {
+func (_s *GameRoomSelect) Aggregate(fns ...AggregateFunc) *GameRoomSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *GameSelect) Scan(ctx context.Context, v any) error {
+func (_s *GameRoomSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GameQuery, *GameSelect](ctx, _s.GameQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*GameRoomQuery, *GameRoomSelect](ctx, _s.GameRoomQuery, _s, _s.inters, v)
 }
 
-func (_s *GameSelect) sqlScan(ctx context.Context, root *GameQuery, v any) error {
+func (_s *GameRoomSelect) sqlScan(ctx context.Context, root *GameRoomQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"xadrez/ent/game"
-	"xadrez/ent/user"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/match"
+	"xadrez/ent/participant"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 )
 
-// Game is the model entity for the Game schema.
-type Game struct {
+// Match is the model entity for the Match schema.
+type Match struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
@@ -23,80 +24,91 @@ type Game struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// Status holds the value of the "status" field.
-	Status game.Status `json:"status,omitempty"`
-	// WhitePlayerID holds the value of the "white_player_id" field.
-	WhitePlayerID uuid.UUID `json:"white_player_id,omitempty"`
-	// BlackPlayerID holds the value of the "black_player_id" field.
-	BlackPlayerID uuid.UUID `json:"black_player_id,omitempty"`
+	// RoomID holds the value of the "room_id" field.
+	RoomID uuid.UUID `json:"room_id,omitempty"`
+	// WhiteParticipantID holds the value of the "white_participant_id" field.
+	WhiteParticipantID uuid.UUID `json:"white_participant_id,omitempty"`
+	// BlackParticipantID holds the value of the "black_participant_id" field.
+	BlackParticipantID uuid.UUID `json:"black_participant_id,omitempty"`
 	// Result holds the value of the "result" field.
-	Result *game.Result `json:"result,omitempty"`
+	Result *match.Result `json:"result,omitempty"`
 	// Termination holds the value of the "termination" field.
-	Termination *game.Termination `json:"termination,omitempty"`
+	Termination *match.Termination `json:"termination,omitempty"`
 	// FinishedAt holds the value of the "finished_at" field.
 	FinishedAt *time.Time `json:"finished_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the GameQuery when eager-loading is set.
-	Edges        GameEdges `json:"edges"`
+	// The values are being populated by the MatchQuery when eager-loading is set.
+	Edges        MatchEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// GameEdges holds the relations/edges for other nodes in the graph.
-type GameEdges struct {
+// MatchEdges holds the relations/edges for other nodes in the graph.
+type MatchEdges struct {
+	// Room holds the value of the room edge.
+	Room *GameRoom `json:"room,omitempty"`
 	// WhitePlayer holds the value of the white_player edge.
-	WhitePlayer *User `json:"white_player,omitempty"`
+	WhitePlayer *Participant `json:"white_player,omitempty"`
 	// BlackPlayer holds the value of the black_player edge.
-	BlackPlayer *User `json:"black_player,omitempty"`
+	BlackPlayer *Participant `json:"black_player,omitempty"`
 	// Moves holds the value of the moves edge.
-	Moves []*GameMove `json:"moves,omitempty"`
+	Moves []*MatchMove `json:"moves,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
+}
+
+// RoomOrErr returns the Room value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MatchEdges) RoomOrErr() (*GameRoom, error) {
+	if e.Room != nil {
+		return e.Room, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: gameroom.Label}
+	}
+	return nil, &NotLoadedError{edge: "room"}
 }
 
 // WhitePlayerOrErr returns the WhitePlayer value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e GameEdges) WhitePlayerOrErr() (*User, error) {
+func (e MatchEdges) WhitePlayerOrErr() (*Participant, error) {
 	if e.WhitePlayer != nil {
 		return e.WhitePlayer, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: user.Label}
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: participant.Label}
 	}
 	return nil, &NotLoadedError{edge: "white_player"}
 }
 
 // BlackPlayerOrErr returns the BlackPlayer value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e GameEdges) BlackPlayerOrErr() (*User, error) {
+func (e MatchEdges) BlackPlayerOrErr() (*Participant, error) {
 	if e.BlackPlayer != nil {
 		return e.BlackPlayer, nil
-	} else if e.loadedTypes[1] {
-		return nil, &NotFoundError{label: user.Label}
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: participant.Label}
 	}
 	return nil, &NotLoadedError{edge: "black_player"}
 }
 
 // MovesOrErr returns the Moves value or an error if the edge
 // was not loaded in eager-loading.
-func (e GameEdges) MovesOrErr() ([]*GameMove, error) {
-	if e.loadedTypes[2] {
+func (e MatchEdges) MovesOrErr() ([]*MatchMove, error) {
+	if e.loadedTypes[3] {
 		return e.Moves, nil
 	}
 	return nil, &NotLoadedError{edge: "moves"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Game) scanValues(columns []string) ([]any, error) {
+func (*Match) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case game.FieldName, game.FieldStatus, game.FieldResult, game.FieldTermination:
+		case match.FieldResult, match.FieldTermination:
 			values[i] = new(sql.NullString)
-		case game.FieldCreatedAt, game.FieldUpdatedAt, game.FieldFinishedAt:
+		case match.FieldCreatedAt, match.FieldUpdatedAt, match.FieldFinishedAt:
 			values[i] = new(sql.NullTime)
-		case game.FieldID, game.FieldWhitePlayerID, game.FieldBlackPlayerID:
+		case match.FieldID, match.FieldRoomID, match.FieldWhiteParticipantID, match.FieldBlackParticipantID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -106,70 +118,64 @@ func (*Game) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Game fields.
-func (_m *Game) assignValues(columns []string, values []any) error {
+// to the Match fields.
+func (_m *Match) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case game.FieldID:
+		case match.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case game.FieldCreatedAt:
+		case match.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case game.FieldUpdatedAt:
+		case match.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case game.FieldName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
-			} else if value.Valid {
-				_m.Name = value.String
-			}
-		case game.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
-			} else if value.Valid {
-				_m.Status = game.Status(value.String)
-			}
-		case game.FieldWhitePlayerID:
+		case match.FieldRoomID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field white_player_id", values[i])
+				return fmt.Errorf("unexpected type %T for field room_id", values[i])
 			} else if value != nil {
-				_m.WhitePlayerID = *value
+				_m.RoomID = *value
 			}
-		case game.FieldBlackPlayerID:
+		case match.FieldWhiteParticipantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field black_player_id", values[i])
+				return fmt.Errorf("unexpected type %T for field white_participant_id", values[i])
 			} else if value != nil {
-				_m.BlackPlayerID = *value
+				_m.WhiteParticipantID = *value
 			}
-		case game.FieldResult:
+		case match.FieldBlackParticipantID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field black_participant_id", values[i])
+			} else if value != nil {
+				_m.BlackParticipantID = *value
+			}
+		case match.FieldResult:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field result", values[i])
 			} else if value.Valid {
-				_m.Result = new(game.Result)
-				*_m.Result = game.Result(value.String)
+				_m.Result = new(match.Result)
+				*_m.Result = match.Result(value.String)
 			}
-		case game.FieldTermination:
+		case match.FieldTermination:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field termination", values[i])
 			} else if value.Valid {
-				_m.Termination = new(game.Termination)
-				*_m.Termination = game.Termination(value.String)
+				_m.Termination = new(match.Termination)
+				*_m.Termination = match.Termination(value.String)
 			}
-		case game.FieldFinishedAt:
+		case match.FieldFinishedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field finished_at", values[i])
 			} else if value.Valid {
@@ -183,49 +189,54 @@ func (_m *Game) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Game.
+// Value returns the ent.Value that was dynamically selected and assigned to the Match.
 // This includes values selected through modifiers, order, etc.
-func (_m *Game) Value(name string) (ent.Value, error) {
+func (_m *Match) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryWhitePlayer queries the "white_player" edge of the Game entity.
-func (_m *Game) QueryWhitePlayer() *UserQuery {
-	return NewGameClient(_m.config).QueryWhitePlayer(_m)
+// QueryRoom queries the "room" edge of the Match entity.
+func (_m *Match) QueryRoom() *GameRoomQuery {
+	return NewMatchClient(_m.config).QueryRoom(_m)
 }
 
-// QueryBlackPlayer queries the "black_player" edge of the Game entity.
-func (_m *Game) QueryBlackPlayer() *UserQuery {
-	return NewGameClient(_m.config).QueryBlackPlayer(_m)
+// QueryWhitePlayer queries the "white_player" edge of the Match entity.
+func (_m *Match) QueryWhitePlayer() *ParticipantQuery {
+	return NewMatchClient(_m.config).QueryWhitePlayer(_m)
 }
 
-// QueryMoves queries the "moves" edge of the Game entity.
-func (_m *Game) QueryMoves() *GameMoveQuery {
-	return NewGameClient(_m.config).QueryMoves(_m)
+// QueryBlackPlayer queries the "black_player" edge of the Match entity.
+func (_m *Match) QueryBlackPlayer() *ParticipantQuery {
+	return NewMatchClient(_m.config).QueryBlackPlayer(_m)
 }
 
-// Update returns a builder for updating this Game.
-// Note that you need to call Game.Unwrap() before calling this method if this Game
+// QueryMoves queries the "moves" edge of the Match entity.
+func (_m *Match) QueryMoves() *MatchMoveQuery {
+	return NewMatchClient(_m.config).QueryMoves(_m)
+}
+
+// Update returns a builder for updating this Match.
+// Note that you need to call Match.Unwrap() before calling this method if this Match
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Game) Update() *GameUpdateOne {
-	return NewGameClient(_m.config).UpdateOne(_m)
+func (_m *Match) Update() *MatchUpdateOne {
+	return NewMatchClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Game entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Match entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Game) Unwrap() *Game {
+func (_m *Match) Unwrap() *Match {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Game is not a transactional entity")
+		panic("ent: Match is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Game) String() string {
+func (_m *Match) String() string {
 	var builder strings.Builder
-	builder.WriteString("Game(")
+	builder.WriteString("Match(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -233,17 +244,14 @@ func (_m *Game) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(_m.Name)
+	builder.WriteString("room_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RoomID))
 	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString("white_participant_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WhiteParticipantID))
 	builder.WriteString(", ")
-	builder.WriteString("white_player_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WhitePlayerID))
-	builder.WriteString(", ")
-	builder.WriteString("black_player_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.BlackPlayerID))
+	builder.WriteString("black_participant_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.BlackParticipantID))
 	builder.WriteString(", ")
 	if v := _m.Result; v != nil {
 		builder.WriteString("result=")
@@ -263,5 +271,5 @@ func (_m *Game) String() string {
 	return builder.String()
 }
 
-// Games is a parsable slice of Game.
-type Games []*Game
+// Matches is a parsable slice of Match.
+type Matches []*Match
