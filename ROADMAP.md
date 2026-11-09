@@ -7,7 +7,7 @@
 - [x] Servidor TCP que aceita várias conexões simultâneas.
 - [ ] Porta lida da configuração.
 - [x] Sessão por conexão, associando a conexão ao usuário autenticado.
-- [ ] Detecção de desconexão, com o usuário removido da lista de online.
+- [x] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
 
 ### Protocolo
@@ -31,7 +31,7 @@
 - [x] Import inexistente de `uuid` em `internal/infra/auth.go`.
 - [ ] Receivers por ponteiro nos serviços em memória, para que o estado persista.
 - [ ] Acesso concorrente seguro ao estado compartilhado.
-- [ ] Remoção do usuário em `RegisterUserLogout`.
+- [x] Remoção do usuário em `RegisterUserLogout`.
 
 ## Usuários
 
@@ -47,7 +47,7 @@
 
 ### Online
 
-- [ ] Listagem de usuários online.
+- [ ] Listagem de usuários online, visível a todos os usuários logados.
 - [ ] Notificação aos clientes quando alguém entra ou sai.
 
 ## Partidas
@@ -68,9 +68,13 @@
 
 ### Convites
 
-- [ ] Criar partida e convidar um usuário online.
-- [ ] Aceitar ou recusar convite.
+- [ ] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
+- [ ] Convite entregue ao convidado em tempo real.
+- [ ] Aceitar convite, entrando na sala como participante.
+- [ ] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
+- [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
+- [ ] Listagem dos convites pendentes do usuário.
 
 ### Jogo
 
@@ -105,10 +109,10 @@
 
 ## Persistência
 
-- [ ] Banco de dados para usuários.
+- [x] Banco de dados para usuários.
 - [ ] Eventos do servidor gravados no banco.
 - [ ] Histórico de partidas.
-- [ ] Decidir: banco (SQLite ou outro).
+- [x] Decidir: banco (SQLite por ora, com migração para Postgres se necessário).
 
 ## Cliente
 
@@ -123,6 +127,8 @@
 - [ ] Ranking público por vitórias e empates.
 - [ ] Jogadores sorteados de uma fila da sala.
 - [ ] Partidas paralelas na mesma sala.
+- [ ] Visibilidade da sala (pública ou privada).
+- [ ] Senha para entrar na sala.
 - [ ] Bot gerenciado pelo servidor.
 - [ ] Reconexão a uma partida em andamento.
 - [ ] Painel de administração em tempo real.
