@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"time"
 
 	"xadrez/ent"
 	"xadrez/ent/gameroom"
@@ -28,13 +29,29 @@ type loadedMatch struct {
 }
 
 func (m *loadedMatch) snapshot() chess.Match {
-	return chess.Match{
-		Room:  m.room,
-		White: m.white,
-		Black: m.black,
-		Turn:  m.game.CurrentTurn(),
-		Board: m.game.GetBoard(),
+	snapshot := chess.Match{
+		Room:    m.room,
+		White:   m.white,
+		Black:   m.black,
+		Turn:    m.game.CurrentTurn(),
+		InCheck: m.game.InCheck(),
+		Board:   m.game.GetBoard(),
 	}
+	switch m.game.Status() {
+	case chess.Checkmate:
+		snapshot.Outcome = chess.OutcomeCheckmate
+		snapshot.Winner = m.playerOf(m.game.CurrentTurn().Opponent())
+	case chess.Stalemate:
+		snapshot.Outcome = chess.OutcomeStalemate
+	}
+	return snapshot
+}
+
+func (m *loadedMatch) playerOf(color chess.PieceColor) string {
+	if color == chess.White {
+		return m.white
+	}
+	return m.black
 }
 
 func (m *loadedMatch) colorOf(player string) (chess.PieceColor, bool) {
@@ -130,7 +147,7 @@ func (s *MatchService) GetMatch(ctx context.Context, roomName string) (chess.Mat
 	return loaded.snapshot(), nil
 }
 
-func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fromX, fromY, toX, toY int) (chess.Match, error) {
+func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fromX, fromY, toX, toY int, promotion chess.PieceKind) (chess.Match, error) {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
 		return chess.Match{}, fmt.Errorf("falha ao iniciar a transação: %w", err)
@@ -144,30 +161,124 @@ func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fr
 	if !ok {
 		return chess.Match{}, rollback(tx, domain.NewError("o usuário %s não é jogador da partida na sala %s", player, roomName))
 	}
-	if err := loaded.game.MakeMove(color, fromX, fromY, toX, toY, chess.Pawn); err != nil {
+
+	promotes := loaded.game.IsPromotion(fromX, fromY, toY)
+	if err := loaded.game.MakeMove(color, fromX, fromY, toX, toY, promotion); err != nil {
 		return chess.Match{}, rollback(tx, err)
 	}
 
-	ply := len(loaded.record.Edges.Moves) + 1
-	_, err = tx.MatchMove.Create().
+	create := tx.MatchMove.Create().
 		SetMatchID(loaded.record.ID).
-		SetPly(ply).
+		SetPly(len(loaded.record.Edges.Moves) + 1).
 		SetFromX(fromX).
 		SetFromY(fromY).
 		SetToX(toX).
-		SetToY(toY).
-		Save(ctx)
+		SetToY(toY)
+	if promotes {
+		create.SetPromotion(promotionToRecord(promotion))
+	}
+	_, err = create.Save(ctx)
 	if ent.IsConstraintError(err) {
 		return chess.Match{}, rollback(tx, domain.NewError("o tabuleiro mudou antes do lance, tente novamente"))
 	}
 	if err != nil {
 		return chess.Match{}, rollback(tx, fmt.Errorf("falha ao gravar o lance: %w", err))
 	}
+
+	snapshot := loaded.snapshot()
+	if snapshot.Outcome != chess.OutcomeNone {
+		if err := finishMatch(ctx, tx, loaded.record, snapshot); err != nil {
+			return chess.Match{}, rollback(tx, err)
+		}
+	}
 	if err := tx.Commit(); err != nil {
 		return chess.Match{}, fmt.Errorf("falha ao confirmar a transação: %w", err)
 	}
 
-	return loaded.snapshot(), nil
+	if snapshot.Outcome != chess.OutcomeNone {
+		log.Info("partida encerrada", "sala", roomName, "resultado", snapshot.Outcome, "vencedor", snapshot.Winner)
+	}
+	return snapshot, nil
+}
+
+func (s *MatchService) Resign(ctx context.Context, roomName, player string) (chess.Match, error) {
+	tx, err := s.client.Tx(ctx)
+	if err != nil {
+		return chess.Match{}, fmt.Errorf("falha ao iniciar a transação: %w", err)
+	}
+
+	loaded, err := loadOngoingMatch(ctx, tx.Client(), roomName)
+	if err != nil {
+		return chess.Match{}, rollback(tx, err)
+	}
+	color, ok := loaded.colorOf(player)
+	if !ok {
+		return chess.Match{}, rollback(tx, domain.NewError("o usuário %s não é jogador da partida na sala %s", player, roomName))
+	}
+
+	snapshot := loaded.snapshot()
+	snapshot.Outcome = chess.OutcomeResignation
+	snapshot.Winner = loaded.playerOf(color.Opponent())
+	if err := finishMatch(ctx, tx, loaded.record, snapshot); err != nil {
+		return chess.Match{}, rollback(tx, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return chess.Match{}, fmt.Errorf("falha ao confirmar a transação: %w", err)
+	}
+
+	log.Info("partida encerrada", "sala", roomName, "resultado", snapshot.Outcome, "vencedor", snapshot.Winner)
+	return snapshot, nil
+}
+
+func finishMatch(ctx context.Context, tx *ent.Tx, record *ent.Match, snapshot chess.Match) error {
+	update := tx.Match.UpdateOne(record).SetFinishedAt(time.Now().UTC())
+	switch snapshot.Winner {
+	case "":
+		update.SetResult(match.ResultDraw)
+	case snapshot.White:
+		update.SetResult(match.ResultWhite)
+	default:
+		update.SetResult(match.ResultBlack)
+	}
+	switch snapshot.Outcome {
+	case chess.OutcomeCheckmate:
+		update.SetTermination(match.TerminationCheckmate)
+	case chess.OutcomeStalemate:
+		update.SetTermination(match.TerminationStalemate)
+	case chess.OutcomeResignation:
+		update.SetTermination(match.TerminationResignation)
+	}
+	if _, err := update.Save(ctx); err != nil {
+		return fmt.Errorf("falha ao encerrar a partida: %w", err)
+	}
+	return nil
+}
+
+func promotionToRecord(kind chess.PieceKind) matchmove.Promotion {
+	switch kind {
+	case chess.Rook:
+		return matchmove.PromotionRook
+	case chess.Bishop:
+		return matchmove.PromotionBishop
+	case chess.Knight:
+		return matchmove.PromotionKnight
+	}
+	return matchmove.PromotionQueen
+}
+
+func promotionFromRecord(promotion *matchmove.Promotion) chess.PieceKind {
+	if promotion == nil {
+		return chess.Pawn
+	}
+	switch *promotion {
+	case matchmove.PromotionRook:
+		return chess.Rook
+	case matchmove.PromotionBishop:
+		return chess.Bishop
+	case matchmove.PromotionKnight:
+		return chess.Knight
+	}
+	return chess.Queen
 }
 
 func loadOngoingMatch(ctx context.Context, client *ent.Client, roomName string) (*loadedMatch, error) {
@@ -186,7 +297,7 @@ func loadOngoingMatch(ctx context.Context, client *ent.Client, roomName string) 
 
 	game := chess.NewGame()
 	for _, move := range record.Edges.Moves {
-		if err := game.MakeMove(game.CurrentTurn(), move.FromX, move.FromY, move.ToX, move.ToY, chess.Pawn); err != nil {
+		if err := game.MakeMove(game.CurrentTurn(), move.FromX, move.FromY, move.ToX, move.ToY, promotionFromRecord(move.Promotion)); err != nil {
 			return nil, fmt.Errorf("lance %d inválido no histórico da partida: %w", move.Ply, err)
 		}
 	}
