@@ -23,7 +23,7 @@
 - [ ] TLS na conexão cliente-servidor.
 - [x] Senhas com hash (Argon2id).
 - [ ] Token de sessão aleatório (`crypto/rand`).
-- [ ] Validação de que só o jogador da vez move as próprias peças.
+- [x] Validação de que só o jogador da vez move as próprias peças.
 - [ ] Limite de tentativas de login.
 
 ### Correções
@@ -47,7 +47,7 @@
 
 ### Online
 
-- [ ] Listagem de usuários online, visível a todos os usuários logados.
+- [x] Listagem de usuários online, visível a todos os usuários logados.
 - [ ] Notificação aos clientes quando alguém entra ou sai.
 
 ## Partidas
@@ -56,11 +56,11 @@
 
 - [x] Sala (`GameRoom`) com administrador e participantes, separada das partidas (`Match`).
 - [x] Partida com referência aos participantes branco e preto, e lances ligados à partida.
-- [ ] Criador da sala definido como administrador.
-- [ ] Entrar numa sala como espectador.
+- [x] Criador da sala definido como administrador.
+- [x] Entrar numa sala como espectador.
 - [ ] Sair da sala.
-- [ ] Administrador escolhe os jogadores branco e preto e inicia a partida.
-- [ ] Uma partida por vez na sala.
+- [x] Administrador escolhe os jogadores branco e preto e inicia a partida.
+- [x] Uma partida por vez na sala.
 - [ ] Nova partida na mesma sala após o fim da anterior.
 - [ ] Administrador bane um participante.
 - [ ] Banido impedido de entrar de novo.
@@ -68,8 +68,8 @@
 
 ### Convites
 
-- [ ] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
-- [ ] Convite entregue ao convidado em tempo real.
+- [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
+- [x] Convite entregue ao convidado em tempo real.
 - [ ] Aceitar convite, entrando na sala como participante.
 - [ ] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
@@ -89,8 +89,8 @@
 - [ ] Promoção, com a peça escolhida no `MoveRequest`.
 - [ ] Turnos, com a fila de ações por partida.
 - [ ] Tabuleiro atualizado para os dois jogadores a cada lance.
-- [ ] Erros do domínio enviados ao cliente como erro de cliente.
-- [ ] Nome de partida único na criação.
+- [x] Erros do domínio enviados ao cliente como erro de cliente.
+- [x] Nome de sala único na criação.
 - [ ] `HandleValidateMoveRequest` validando sem executar o lance.
 
 ### Fim de jogo
