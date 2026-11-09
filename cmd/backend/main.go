@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"os"
 	"xadrez/cmd/backend/handlers"
 	"xadrez/ent"
 	"xadrez/internal/domain/auth"
@@ -11,6 +13,8 @@ import (
 
 	"charm.land/log/v2"
 )
+
+const defaultDatabaseDSN = "file:xadrez.db?_pragma=foreign_keys(1)"
 
 type Services struct {
 	loginService auth.LoginService
@@ -42,7 +46,16 @@ func newHandlerManager(services Services) *tcp.HandlerManager {
 }
 
 func main() {
-	var client *ent.Client
+	dsn := os.Getenv("XADREZ_DATABASE_DSN")
+	if dsn == "" {
+		dsn = defaultDatabaseDSN
+	}
+	client, err := infra.OpenDatabase(context.Background(), dsn)
+	if err != nil {
+		log.Fatal("erro ao abrir o banco de dados", "erro", err)
+	}
+	defer client.Close()
+
 	services := newServices(client)
 	server := tcp.NewTCPServer(newHandlerManager(services))
 	if err := server.ListenAndServe(":9000"); err != nil {
