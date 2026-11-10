@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	lightTile = rl.NewColor(238, 238, 210, 255)
-	darkTile  = rl.NewColor(118, 150, 86, 255)
+	lightTile = rl.NewColor(240, 160, 70, 255)
+	darkTile  = rl.NewColor(120, 70, 160, 255)
 )
 
 type sprite struct {
@@ -95,9 +95,5 @@ func (b *BoardRenderer) renderPiece(kind chess.PieceKind, color chess.PieceColor
 		return
 	}
 
-	for _, offset := range []rl.Vector2{{X: -1}, {X: 1}, {Y: -1}, {Y: 1}} {
-		outline := rl.Vector2{X: position.X + offset.X*scale, Y: position.Y + offset.Y*scale}
-		rl.DrawTextureEx(s.dark, outline, 0, scale, rl.White)
-	}
 	rl.DrawTextureEx(s.light, position, 0, scale, rl.White)
 }
