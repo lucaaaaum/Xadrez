@@ -8,6 +8,136 @@ import (
 )
 
 var (
+	// GameRoomsColumns holds the columns for the "game_rooms" table.
+	GameRoomsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 255, SchemaType: map[string]string{"postgres": "varchar(255)"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive"}, Default: "active"},
+		{Name: "admin_id", Type: field.TypeUUID},
+	}
+	// GameRoomsTable holds the schema information for the "game_rooms" table.
+	GameRoomsTable = &schema.Table{
+		Name:       "game_rooms",
+		Columns:    GameRoomsColumns,
+		PrimaryKey: []*schema.Column{GameRoomsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "game_rooms_users_administered_rooms",
+				Columns:    []*schema.Column{GameRoomsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// MatchesColumns holds the columns for the "matches" table.
+	MatchesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "result", Type: field.TypeEnum, Nullable: true, Enums: []string{"white", "black", "draw"}},
+		{Name: "termination", Type: field.TypeEnum, Nullable: true, Enums: []string{"checkmate", "stalemate", "resignation", "disconnection", "fifty_moves", "threefold_repetition", "insufficient_material"}},
+		{Name: "finished_at", Type: field.TypeTime, Nullable: true},
+		{Name: "room_id", Type: field.TypeUUID},
+		{Name: "white_participant_id", Type: field.TypeUUID},
+		{Name: "black_participant_id", Type: field.TypeUUID},
+	}
+	// MatchesTable holds the schema information for the "matches" table.
+	MatchesTable = &schema.Table{
+		Name:       "matches",
+		Columns:    MatchesColumns,
+		PrimaryKey: []*schema.Column{MatchesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "matches_game_rooms_matches",
+				Columns:    []*schema.Column{MatchesColumns[6]},
+				RefColumns: []*schema.Column{GameRoomsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "matches_participants_white_matches",
+				Columns:    []*schema.Column{MatchesColumns[7]},
+				RefColumns: []*schema.Column{ParticipantsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "matches_participants_black_matches",
+				Columns:    []*schema.Column{MatchesColumns[8]},
+				RefColumns: []*schema.Column{ParticipantsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// MatchMovesColumns holds the columns for the "match_moves" table.
+	MatchMovesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "ply", Type: field.TypeInt},
+		{Name: "from_x", Type: field.TypeInt},
+		{Name: "from_y", Type: field.TypeInt},
+		{Name: "to_x", Type: field.TypeInt},
+		{Name: "to_y", Type: field.TypeInt},
+		{Name: "promotion", Type: field.TypeEnum, Nullable: true, Enums: []string{"queen", "rook", "bishop", "knight"}},
+		{Name: "match_id", Type: field.TypeUUID},
+	}
+	// MatchMovesTable holds the schema information for the "match_moves" table.
+	MatchMovesTable = &schema.Table{
+		Name:       "match_moves",
+		Columns:    MatchMovesColumns,
+		PrimaryKey: []*schema.Column{MatchMovesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "match_moves_matches_moves",
+				Columns:    []*schema.Column{MatchMovesColumns[9]},
+				RefColumns: []*schema.Column{MatchesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "matchmove_match_id_ply",
+				Unique:  true,
+				Columns: []*schema.Column{MatchMovesColumns[9], MatchMovesColumns[3]},
+			},
+		},
+	}
+	// ParticipantsColumns holds the columns for the "participants" table.
+	ParticipantsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "room_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+	}
+	// ParticipantsTable holds the schema information for the "participants" table.
+	ParticipantsTable = &schema.Table{
+		Name:       "participants",
+		Columns:    ParticipantsColumns,
+		PrimaryKey: []*schema.Column{ParticipantsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "participants_game_rooms_participants",
+				Columns:    []*schema.Column{ParticipantsColumns[3]},
+				RefColumns: []*schema.Column{GameRoomsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "participants_users_participations",
+				Columns:    []*schema.Column{ParticipantsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "participant_room_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{ParticipantsColumns[3], ParticipantsColumns[4]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -43,11 +173,22 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		GameRoomsTable,
+		MatchesTable,
+		MatchMovesTable,
+		ParticipantsTable,
 		UsersTable,
 		UserPasswordsTable,
 	}
 )
 
 func init() {
+	GameRoomsTable.ForeignKeys[0].RefTable = UsersTable
+	MatchesTable.ForeignKeys[0].RefTable = GameRoomsTable
+	MatchesTable.ForeignKeys[1].RefTable = ParticipantsTable
+	MatchesTable.ForeignKeys[2].RefTable = ParticipantsTable
+	MatchMovesTable.ForeignKeys[0].RefTable = MatchesTable
+	ParticipantsTable.ForeignKeys[0].RefTable = GameRoomsTable
+	ParticipantsTable.ForeignKeys[1].RefTable = UsersTable
 	UserPasswordsTable.ForeignKeys[0].RefTable = UsersTable
 }

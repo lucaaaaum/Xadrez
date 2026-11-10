@@ -239,6 +239,52 @@ func HasPasswordWith(preds ...predicate.UserPassword) predicate.User {
 	})
 }
 
+// HasAdministeredRooms applies the HasEdge predicate on the "administered_rooms" edge.
+func HasAdministeredRooms() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AdministeredRoomsTable, AdministeredRoomsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAdministeredRoomsWith applies the HasEdge predicate on the "administered_rooms" edge with a given conditions (other predicates).
+func HasAdministeredRoomsWith(preds ...predicate.GameRoom) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAdministeredRoomsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParticipations applies the HasEdge predicate on the "participations" edge.
+func HasParticipations() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ParticipationsTable, ParticipationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParticipationsWith applies the HasEdge predicate on the "participations" edge with a given conditions (other predicates).
+func HasParticipationsWith(preds ...predicate.Participant) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newParticipationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

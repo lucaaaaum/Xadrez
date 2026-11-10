@@ -23,6 +23,10 @@ const (
 	FieldName = "name"
 	// EdgePassword holds the string denoting the password edge name in mutations.
 	EdgePassword = "password"
+	// EdgeAdministeredRooms holds the string denoting the administered_rooms edge name in mutations.
+	EdgeAdministeredRooms = "administered_rooms"
+	// EdgeParticipations holds the string denoting the participations edge name in mutations.
+	EdgeParticipations = "participations"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PasswordTable is the table that holds the password relation/edge.
@@ -32,6 +36,20 @@ const (
 	PasswordInverseTable = "user_passwords"
 	// PasswordColumn is the table column denoting the password relation/edge.
 	PasswordColumn = "user_id"
+	// AdministeredRoomsTable is the table that holds the administered_rooms relation/edge.
+	AdministeredRoomsTable = "game_rooms"
+	// AdministeredRoomsInverseTable is the table name for the GameRoom entity.
+	// It exists in this package in order to avoid circular dependency with the "gameroom" package.
+	AdministeredRoomsInverseTable = "game_rooms"
+	// AdministeredRoomsColumn is the table column denoting the administered_rooms relation/edge.
+	AdministeredRoomsColumn = "admin_id"
+	// ParticipationsTable is the table that holds the participations relation/edge.
+	ParticipationsTable = "participants"
+	// ParticipationsInverseTable is the table name for the Participant entity.
+	// It exists in this package in order to avoid circular dependency with the "participant" package.
+	ParticipationsInverseTable = "participants"
+	// ParticipationsColumn is the table column denoting the participations relation/edge.
+	ParticipationsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -94,10 +112,52 @@ func ByPasswordField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPasswordStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByAdministeredRoomsCount orders the results by administered_rooms count.
+func ByAdministeredRoomsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAdministeredRoomsStep(), opts...)
+	}
+}
+
+// ByAdministeredRooms orders the results by administered_rooms terms.
+func ByAdministeredRooms(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAdministeredRoomsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByParticipationsCount orders the results by participations count.
+func ByParticipationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newParticipationsStep(), opts...)
+	}
+}
+
+// ByParticipations orders the results by participations terms.
+func ByParticipations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newParticipationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPasswordStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PasswordInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, PasswordTable, PasswordColumn),
+	)
+}
+func newAdministeredRoomsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AdministeredRoomsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AdministeredRoomsTable, AdministeredRoomsColumn),
+	)
+}
+func newParticipationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ParticipationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ParticipationsTable, ParticipationsColumn),
 	)
 }

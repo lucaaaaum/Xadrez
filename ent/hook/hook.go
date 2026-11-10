@@ -8,6 +8,54 @@ import (
 	"xadrez/ent"
 )
 
+// The GameRoomFunc type is an adapter to allow the use of ordinary
+// function as GameRoom mutator.
+type GameRoomFunc func(context.Context, *ent.GameRoomMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GameRoomFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GameRoomMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GameRoomMutation", m)
+}
+
+// The MatchFunc type is an adapter to allow the use of ordinary
+// function as Match mutator.
+type MatchFunc func(context.Context, *ent.MatchMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MatchFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MatchMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MatchMutation", m)
+}
+
+// The MatchMoveFunc type is an adapter to allow the use of ordinary
+// function as MatchMove mutator.
+type MatchMoveFunc func(context.Context, *ent.MatchMoveMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MatchMoveFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MatchMoveMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MatchMoveMutation", m)
+}
+
+// The ParticipantFunc type is an adapter to allow the use of ordinary
+// function as Participant mutator.
+type ParticipantFunc func(context.Context, *ent.ParticipantMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ParticipantFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ParticipantMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ParticipantMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

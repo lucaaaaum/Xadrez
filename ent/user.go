@@ -35,9 +35,13 @@ type User struct {
 type UserEdges struct {
 	// Password holds the value of the password edge.
 	Password *UserPassword `json:"password,omitempty"`
+	// AdministeredRooms holds the value of the administered_rooms edge.
+	AdministeredRooms []*GameRoom `json:"administered_rooms,omitempty"`
+	// Participations holds the value of the participations edge.
+	Participations []*Participant `json:"participations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // PasswordOrErr returns the Password value or an error if the edge
@@ -49,6 +53,24 @@ func (e UserEdges) PasswordOrErr() (*UserPassword, error) {
 		return nil, &NotFoundError{label: userpassword.Label}
 	}
 	return nil, &NotLoadedError{edge: "password"}
+}
+
+// AdministeredRoomsOrErr returns the AdministeredRooms value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AdministeredRoomsOrErr() ([]*GameRoom, error) {
+	if e.loadedTypes[1] {
+		return e.AdministeredRooms, nil
+	}
+	return nil, &NotLoadedError{edge: "administered_rooms"}
+}
+
+// ParticipationsOrErr returns the Participations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ParticipationsOrErr() ([]*Participant, error) {
+	if e.loadedTypes[2] {
+		return e.Participations, nil
+	}
+	return nil, &NotLoadedError{edge: "participations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -117,6 +139,16 @@ func (_m *User) Value(name string) (ent.Value, error) {
 // QueryPassword queries the "password" edge of the User entity.
 func (_m *User) QueryPassword() *UserPasswordQuery {
 	return NewUserClient(_m.config).QueryPassword(_m)
+}
+
+// QueryAdministeredRooms queries the "administered_rooms" edge of the User entity.
+func (_m *User) QueryAdministeredRooms() *GameRoomQuery {
+	return NewUserClient(_m.config).QueryAdministeredRooms(_m)
+}
+
+// QueryParticipations queries the "participations" edge of the User entity.
+func (_m *User) QueryParticipations() *ParticipantQuery {
+	return NewUserClient(_m.config).QueryParticipations(_m)
 }
 
 // Update returns a builder for updating this User.

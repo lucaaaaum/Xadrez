@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/participant"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -87,6 +89,36 @@ func (_c *UserCreate) SetNillablePasswordID(id *int) *UserCreate {
 // SetPassword sets the "password" edge to the UserPassword entity.
 func (_c *UserCreate) SetPassword(v *UserPassword) *UserCreate {
 	return _c.SetPasswordID(v.ID)
+}
+
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_c *UserCreate) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddAdministeredRoomIDs(ids...)
+	return _c
+}
+
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_c *UserCreate) AddAdministeredRooms(v ...*GameRoom) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAdministeredRoomIDs(ids...)
+}
+
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_c *UserCreate) AddParticipationIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddParticipationIDs(ids...)
+	return _c
+}
+
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_c *UserCreate) AddParticipations(v ...*Participant) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddParticipationIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -210,6 +242,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userpassword.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ParticipationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

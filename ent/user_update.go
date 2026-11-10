@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"xadrez/ent/gameroom"
+	"xadrez/ent/participant"
 	"xadrez/ent/predicate"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
@@ -14,6 +16,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -54,6 +57,36 @@ func (_u *UserUpdate) SetPassword(v *UserPassword) *UserUpdate {
 	return _u.SetPasswordID(v.ID)
 }
 
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_u *UserUpdate) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddAdministeredRoomIDs(ids...)
+	return _u
+}
+
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdate) AddAdministeredRooms(v ...*GameRoom) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAdministeredRoomIDs(ids...)
+}
+
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_u *UserUpdate) AddParticipationIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddParticipationIDs(ids...)
+	return _u
+}
+
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_u *UserUpdate) AddParticipations(v ...*Participant) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddParticipationIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -63,6 +96,48 @@ func (_u *UserUpdate) Mutation() *UserMutation {
 func (_u *UserUpdate) ClearPassword() *UserUpdate {
 	_u.mutation.ClearPassword()
 	return _u
+}
+
+// ClearAdministeredRooms clears all "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdate) ClearAdministeredRooms() *UserUpdate {
+	_u.mutation.ClearAdministeredRooms()
+	return _u
+}
+
+// RemoveAdministeredRoomIDs removes the "administered_rooms" edge to GameRoom entities by IDs.
+func (_u *UserUpdate) RemoveAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveAdministeredRoomIDs(ids...)
+	return _u
+}
+
+// RemoveAdministeredRooms removes "administered_rooms" edges to GameRoom entities.
+func (_u *UserUpdate) RemoveAdministeredRooms(v ...*GameRoom) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAdministeredRoomIDs(ids...)
+}
+
+// ClearParticipations clears all "participations" edges to the Participant entity.
+func (_u *UserUpdate) ClearParticipations() *UserUpdate {
+	_u.mutation.ClearParticipations()
+	return _u
+}
+
+// RemoveParticipationIDs removes the "participations" edge to Participant entities by IDs.
+func (_u *UserUpdate) RemoveParticipationIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveParticipationIDs(ids...)
+	return _u
+}
+
+// RemoveParticipations removes "participations" edges to Participant entities.
+func (_u *UserUpdate) RemoveParticipations(v ...*Participant) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveParticipationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -142,6 +217,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AdministeredRoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAdministeredRoomsIDs(); len(nodes) > 0 && !_u.mutation.AdministeredRoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParticipationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedParticipationsIDs(); len(nodes) > 0 && !_u.mutation.ParticipationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParticipationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -187,6 +352,36 @@ func (_u *UserUpdateOne) SetPassword(v *UserPassword) *UserUpdateOne {
 	return _u.SetPasswordID(v.ID)
 }
 
+// AddAdministeredRoomIDs adds the "administered_rooms" edge to the GameRoom entity by IDs.
+func (_u *UserUpdateOne) AddAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddAdministeredRoomIDs(ids...)
+	return _u
+}
+
+// AddAdministeredRooms adds the "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdateOne) AddAdministeredRooms(v ...*GameRoom) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAdministeredRoomIDs(ids...)
+}
+
+// AddParticipationIDs adds the "participations" edge to the Participant entity by IDs.
+func (_u *UserUpdateOne) AddParticipationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddParticipationIDs(ids...)
+	return _u
+}
+
+// AddParticipations adds the "participations" edges to the Participant entity.
+func (_u *UserUpdateOne) AddParticipations(v ...*Participant) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddParticipationIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -196,6 +391,48 @@ func (_u *UserUpdateOne) Mutation() *UserMutation {
 func (_u *UserUpdateOne) ClearPassword() *UserUpdateOne {
 	_u.mutation.ClearPassword()
 	return _u
+}
+
+// ClearAdministeredRooms clears all "administered_rooms" edges to the GameRoom entity.
+func (_u *UserUpdateOne) ClearAdministeredRooms() *UserUpdateOne {
+	_u.mutation.ClearAdministeredRooms()
+	return _u
+}
+
+// RemoveAdministeredRoomIDs removes the "administered_rooms" edge to GameRoom entities by IDs.
+func (_u *UserUpdateOne) RemoveAdministeredRoomIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveAdministeredRoomIDs(ids...)
+	return _u
+}
+
+// RemoveAdministeredRooms removes "administered_rooms" edges to GameRoom entities.
+func (_u *UserUpdateOne) RemoveAdministeredRooms(v ...*GameRoom) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAdministeredRoomIDs(ids...)
+}
+
+// ClearParticipations clears all "participations" edges to the Participant entity.
+func (_u *UserUpdateOne) ClearParticipations() *UserUpdateOne {
+	_u.mutation.ClearParticipations()
+	return _u
+}
+
+// RemoveParticipationIDs removes the "participations" edge to Participant entities by IDs.
+func (_u *UserUpdateOne) RemoveParticipationIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveParticipationIDs(ids...)
+	return _u
+}
+
+// RemoveParticipations removes "participations" edges to Participant entities.
+func (_u *UserUpdateOne) RemoveParticipations(v ...*Participant) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveParticipationIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -298,6 +535,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userpassword.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AdministeredRoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAdministeredRoomsIDs(); len(nodes) > 0 && !_u.mutation.AdministeredRoomsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AdministeredRoomsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AdministeredRoomsTable,
+			Columns: []string{user.AdministeredRoomsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(gameroom.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParticipationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedParticipationsIDs(); len(nodes) > 0 && !_u.mutation.ParticipationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParticipationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ParticipationsTable,
+			Columns: []string{user.ParticipationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(participant.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

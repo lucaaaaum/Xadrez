@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
+	"os"
 	"xadrez/cmd/backend/handlers"
 	"xadrez/ent"
 	"xadrez/internal/domain/auth"
+	"xadrez/internal/domain/chess"
+	"xadrez/internal/domain/rooms"
 	"xadrez/internal/domain/users"
 	"xadrez/internal/infra"
 	"xadrez/internal/infra/tcp"
@@ -11,32 +15,69 @@ import (
 	"charm.land/log/v2"
 )
 
+const defaultDatabaseDSN = "file:xadrez.db?_pragma=foreign_keys(1)"
+const defaultAddress = ":9000"
+
 type Services struct {
 	loginService auth.LoginService
 	userService  users.UserService
+	roomService  rooms.RoomService
+	matchService chess.MatchService
 }
 
 func newServices(client *ent.Client) Services {
+	roomService := infra.NewRoomService(client)
 	return Services{
 		loginService: infra.NewAuthService(client),
-		userService:  infra.NewInMemoryUserService(),
+		userService:  infra.NewUserService(client),
+		roomService:  roomService,
+		matchService: infra.NewMatchService(client, roomService),
 	}
 }
 
-func newHandlerManager(services Services) *tcp.HandlerManager {
-	handlerManager := tcp.NewHandlerManager()
+func registerHandlers(handlerManager *tcp.HandlerManager, services Services, notifier handlers.Notifier) {
 
-	authHandler := handlers.NewAuthHandler(services.loginService)
+	authHandler := handlers.NewAuthHandler(services.loginService, services.userService)
 	handlerManager.RegisterRequestHandler("login", authHandler.HandleLogin)
+	handlerManager.RegisterDisconnectHandler(authHandler.HandleDisconnect)
 
-	return handlerManager
+	userHandler := handlers.NewUserHandler(services.userService)
+	handlerManager.RegisterRequestHandler("list_online_users", userHandler.HandleListOnlineUsers)
+
+	roomHandler := handlers.NewRoomHandler(services.roomService, services.userService, notifier)
+	handlerManager.RegisterRequestHandler("create_room", roomHandler.HandleCreateRoom)
+	handlerManager.RegisterRequestHandler("join_room", roomHandler.HandleJoinRoom)
+	handlerManager.RegisterRequestHandler("list_rooms", roomHandler.HandleListRooms)
+	handlerManager.RegisterRequestHandler("invite_to_room", roomHandler.HandleInviteToRoom)
+
+	matchHandler := handlers.NewMatchHandler(services.matchService, services.roomService, notifier)
+	handlerManager.RegisterRequestHandler("start_match", matchHandler.HandleStartMatch)
+	handlerManager.RegisterRequestHandler("get_match", matchHandler.HandleGetMatch)
+	handlerManager.RegisterRequestHandler("make_move", matchHandler.HandleMakeMove)
+	handlerManager.RegisterRequestHandler("resign", matchHandler.HandleResign)
+
 }
 
 func main() {
-	var client *ent.Client
+	dsn := os.Getenv("XADREZ_DATABASE_DSN")
+	if dsn == "" {
+		dsn = defaultDatabaseDSN
+	}
+	client, err := infra.OpenDatabase(context.Background(), dsn)
+	if err != nil {
+		log.Fatal("erro ao abrir o banco de dados", "erro", err)
+	}
+	defer client.Close()
+
 	services := newServices(client)
-	server := tcp.NewTCPServer(newHandlerManager(services))
-	if err := server.ListenAndServe(":9000"); err != nil {
+	handlerManager := tcp.NewHandlerManager()
+	server := tcp.NewTCPServer(handlerManager)
+	registerHandlers(handlerManager, services, server)
+	address := os.Getenv("XADREZ_ADDRESS")
+	if address == "" {
+		address = defaultAddress
+	}
+	if err := server.ListenAndServe(address); err != nil {
 		log.Fatal("erro no servidor", "erro", err)
 	}
 }

@@ -33,5 +33,8 @@ func (User) Edges() []ent.Edge {
 		edge.To("password", UserPassword.Type).
 			Unique().
 			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("administered_rooms", GameRoom.Type),
+		edge.To("participations", Participant.Type).
+			Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }

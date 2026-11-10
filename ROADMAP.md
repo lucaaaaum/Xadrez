@@ -5,9 +5,9 @@
 ### Conexão
 
 - [x] Servidor TCP que aceita várias conexões simultâneas.
-- [ ] Porta lida da configuração.
+- [x] Porta lida da configuração.
 - [x] Sessão por conexão, associando a conexão ao usuário autenticado.
-- [ ] Detecção de desconexão, com o usuário removido da lista de online.
+- [x] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
 
 ### Protocolo
@@ -23,53 +23,83 @@
 - [ ] TLS na conexão cliente-servidor.
 - [x] Senhas com hash (Argon2id).
 - [ ] Token de sessão aleatório (`crypto/rand`).
-- [ ] Validação de que só o jogador da vez move as próprias peças.
+- [x] Validação de que só o jogador da vez move as próprias peças.
 - [ ] Limite de tentativas de login.
 
 ### Correções
 
 - [x] Import inexistente de `uuid` em `internal/infra/auth.go`.
-- [ ] Receivers por ponteiro nos serviços em memória, para que o estado persista.
-- [ ] Acesso concorrente seguro ao estado compartilhado.
-- [ ] Remoção do usuário em `RegisterUserLogout`.
+- [x] Receivers por ponteiro nos serviços em memória, para que o estado persista.
+- [x] Acesso concorrente seguro ao estado compartilhado.
+- [x] Remoção do usuário em `RegisterUserLogout`.
 
 ## Usuários
 
 ### Cadastro
 
 - [ ] Cadastro com nome de usuário e senha, separado do login.
-- [ ] Nome de usuário único.
+- [x] Nome de usuário único.
 
 ### Autenticação
 
-- [ ] Login.
-- [ ] Logout.
+- [x] Login.
+- [x] Logout.
 
 ### Online
 
-- [ ] Listagem de usuários online.
+- [x] Listagem de usuários online, visível a todos os usuários logados.
 - [ ] Notificação aos clientes quando alguém entra ou sai.
 
 ## Partidas
 
+### Salas
+
+- [x] Sala (`GameRoom`) com administrador e participantes, separada das partidas (`Match`).
+- [x] Partida com referência aos participantes branco e preto, e lances ligados à partida.
+- [x] Criador da sala definido como administrador.
+- [x] Entrar numa sala como espectador.
+- [ ] Sair da sala.
+- [x] Administrador escolhe os jogadores branco e preto e inicia a partida.
+- [x] Uma partida por vez na sala.
+- [x] Nova partida na mesma sala após o fim da anterior.
+- [ ] Administrador bane um participante.
+- [ ] Banido impedido de entrar de novo.
+- [ ] Transferência de administrador quando ele sai.
+
 ### Convites
 
-- [ ] Criar partida e convidar um usuário online.
-- [ ] Aceitar ou recusar convite.
+- [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
+- [x] Convite entregue ao convidado em tempo real.
+- [ ] Aceitar convite, entrando na sala como participante.
+- [ ] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
+- [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
+- [ ] Listagem dos convites pendentes do usuário.
 
 ### Jogo
 
-- [ ] Regras do xadrez: validação de lances, roque, en passant, promoção.
+- [x] Decidir: biblioteca de xadrez ou implementação própria.
+- [x] Movimento básico de cada peça.
+- [x] Lances restritos aos limites do tabuleiro.
+- [x] Caminho livre para bispo, torre, dama e avanço do peão.
+- [x] Captura do peão na diagonal, sem captura no avanço reto.
+- [x] Lance que deixa o próprio rei em xeque é rejeitado.
+- [ ] Roque, sem passar por casa atacada e com rei e torre sem terem se movido.
+- [ ] En passant.
+- [x] Promoção, com a peça escolhida no `MoveRequest`.
 - [ ] Turnos, com a fila de ações por partida.
-- [ ] Tabuleiro atualizado para os dois jogadores a cada lance.
-- [ ] Decidir: biblioteca de xadrez ou implementação própria.
+- [x] Tabuleiro atualizado para jogadores e espectadores a cada lance.
+- [x] Erros do domínio enviados ao cliente como erro de cliente.
+- [x] Nome de sala único na criação.
+- [ ] `HandleValidateMoveRequest` validando sem executar o lance.
 
 ### Fim de jogo
 
-- [ ] Xeque-mate, afogamento e demais empates.
-- [ ] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
-- [ ] Desistência, com vitória concedida ao oponente.
+- [x] Xeque-mate.
+- [x] Afogamento.
+- [ ] Empate por 50 lances, repetição tripla e material insuficiente.
+- [x] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
+- [x] Desistência, com vitória concedida ao oponente.
 - [ ] Vitória por desconexão do oponente.
 
 ## Eventos
@@ -79,10 +109,10 @@
 
 ## Persistência
 
-- [ ] Banco de dados para usuários.
+- [x] Banco de dados para usuários.
 - [ ] Eventos do servidor gravados no banco.
-- [ ] Histórico de partidas.
-- [ ] Decidir: banco (SQLite ou outro).
+- [x] Histórico de partidas.
+- [x] Decidir: banco (SQLite por ora, com migração para Postgres se necessário).
 
 ## Cliente
 
@@ -95,6 +125,10 @@
 ## Opcionais
 
 - [ ] Ranking público por vitórias e empates.
+- [ ] Jogadores sorteados de uma fila da sala.
+- [ ] Partidas paralelas na mesma sala.
+- [ ] Visibilidade da sala (pública ou privada).
+- [ ] Senha para entrar na sala.
 - [ ] Bot gerenciado pelo servidor.
 - [ ] Reconexão a uma partida em andamento.
 - [ ] Painel de administração em tempo real.
@@ -102,7 +136,7 @@
 
 ## Testes
 
-- [ ] Testes unitários das regras do xadrez.
+- [x] Testes unitários das regras do xadrez.
 - [ ] Testes funcionais cobrindo todos os resultados de partida.
 - [ ] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).

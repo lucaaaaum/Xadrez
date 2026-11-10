@@ -11,6 +11,10 @@ import (
 
 	"xadrez/ent/migrate"
 
+	"xadrez/ent/gameroom"
+	"xadrez/ent/match"
+	"xadrez/ent/matchmove"
+	"xadrez/ent/participant"
 	"xadrez/ent/user"
 	"xadrez/ent/userpassword"
 
@@ -26,6 +30,14 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// GameRoom is the client for interacting with the GameRoom builders.
+	GameRoom *GameRoomClient
+	// Match is the client for interacting with the Match builders.
+	Match *MatchClient
+	// MatchMove is the client for interacting with the MatchMove builders.
+	MatchMove *MatchMoveClient
+	// Participant is the client for interacting with the Participant builders.
+	Participant *ParticipantClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserPassword is the client for interacting with the UserPassword builders.
@@ -41,6 +53,10 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.GameRoom = NewGameRoomClient(c.config)
+	c.Match = NewMatchClient(c.config)
+	c.MatchMove = NewMatchMoveClient(c.config)
+	c.Participant = NewParticipantClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserPassword = NewUserPasswordClient(c.config)
 }
@@ -135,6 +151,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:          ctx,
 		config:       cfg,
+		GameRoom:     NewGameRoomClient(cfg),
+		Match:        NewMatchClient(cfg),
+		MatchMove:    NewMatchMoveClient(cfg),
+		Participant:  NewParticipantClient(cfg),
 		User:         NewUserClient(cfg),
 		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
@@ -156,6 +176,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:          ctx,
 		config:       cfg,
+		GameRoom:     NewGameRoomClient(cfg),
+		Match:        NewMatchClient(cfg),
+		MatchMove:    NewMatchMoveClient(cfg),
+		Participant:  NewParticipantClient(cfg),
 		User:         NewUserClient(cfg),
 		UserPassword: NewUserPasswordClient(cfg),
 	}, nil
@@ -164,7 +188,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		GameRoom.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -186,26 +210,764 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.User.Use(hooks...)
-	c.UserPassword.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.GameRoom, c.Match, c.MatchMove, c.Participant, c.User, c.UserPassword,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.User.Intercept(interceptors...)
-	c.UserPassword.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.GameRoom, c.Match, c.MatchMove, c.Participant, c.User, c.UserPassword,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *GameRoomMutation:
+		return c.GameRoom.mutate(ctx, m)
+	case *MatchMutation:
+		return c.Match.mutate(ctx, m)
+	case *MatchMoveMutation:
+		return c.MatchMove.mutate(ctx, m)
+	case *ParticipantMutation:
+		return c.Participant.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserPasswordMutation:
 		return c.UserPassword.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// GameRoomClient is a client for the GameRoom schema.
+type GameRoomClient struct {
+	config
+}
+
+// NewGameRoomClient returns a client for the GameRoom from the given config.
+func NewGameRoomClient(c config) *GameRoomClient {
+	return &GameRoomClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `gameroom.Hooks(f(g(h())))`.
+func (c *GameRoomClient) Use(hooks ...Hook) {
+	c.hooks.GameRoom = append(c.hooks.GameRoom, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `gameroom.Intercept(f(g(h())))`.
+func (c *GameRoomClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GameRoom = append(c.inters.GameRoom, interceptors...)
+}
+
+// Create returns a builder for creating a GameRoom entity.
+func (c *GameRoomClient) Create() *GameRoomCreate {
+	mutation := newGameRoomMutation(c.config, OpCreate)
+	return &GameRoomCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GameRoom entities.
+func (c *GameRoomClient) CreateBulk(builders ...*GameRoomCreate) *GameRoomCreateBulk {
+	return &GameRoomCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GameRoomClient) MapCreateBulk(slice any, setFunc func(*GameRoomCreate, int)) *GameRoomCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GameRoomCreateBulk{err: fmt.Errorf("calling to GameRoomClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GameRoomCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GameRoomCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GameRoom.
+func (c *GameRoomClient) Update() *GameRoomUpdate {
+	mutation := newGameRoomMutation(c.config, OpUpdate)
+	return &GameRoomUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GameRoomClient) UpdateOne(_m *GameRoom) *GameRoomUpdateOne {
+	mutation := newGameRoomMutation(c.config, OpUpdateOne, withGameRoom(_m))
+	return &GameRoomUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GameRoomClient) UpdateOneID(id uuid.UUID) *GameRoomUpdateOne {
+	mutation := newGameRoomMutation(c.config, OpUpdateOne, withGameRoomID(id))
+	return &GameRoomUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GameRoom.
+func (c *GameRoomClient) Delete() *GameRoomDelete {
+	mutation := newGameRoomMutation(c.config, OpDelete)
+	return &GameRoomDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GameRoomClient) DeleteOne(_m *GameRoom) *GameRoomDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GameRoomClient) DeleteOneID(id uuid.UUID) *GameRoomDeleteOne {
+	builder := c.Delete().Where(gameroom.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GameRoomDeleteOne{builder}
+}
+
+// Query returns a query builder for GameRoom.
+func (c *GameRoomClient) Query() *GameRoomQuery {
+	return &GameRoomQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGameRoom},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GameRoom entity by its id.
+func (c *GameRoomClient) Get(ctx context.Context, id uuid.UUID) (*GameRoom, error) {
+	return c.Query().Where(gameroom.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GameRoomClient) GetX(ctx context.Context, id uuid.UUID) *GameRoom {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAdmin queries the admin edge of a GameRoom.
+func (c *GameRoomClient) QueryAdmin(_m *GameRoom) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, gameroom.AdminTable, gameroom.AdminColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParticipants queries the participants edge of a GameRoom.
+func (c *GameRoomClient) QueryParticipants(_m *GameRoom) *ParticipantQuery {
+	query := (&ParticipantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, id),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameroom.ParticipantsTable, gameroom.ParticipantsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMatches queries the matches edge of a GameRoom.
+func (c *GameRoomClient) QueryMatches(_m *GameRoom) *MatchQuery {
+	query := (&MatchClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(gameroom.Table, gameroom.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, gameroom.MatchesTable, gameroom.MatchesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GameRoomClient) Hooks() []Hook {
+	return c.hooks.GameRoom
+}
+
+// Interceptors returns the client interceptors.
+func (c *GameRoomClient) Interceptors() []Interceptor {
+	return c.inters.GameRoom
+}
+
+func (c *GameRoomClient) mutate(ctx context.Context, m *GameRoomMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GameRoomCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GameRoomUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GameRoomUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GameRoomDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GameRoom mutation op: %q", m.Op())
+	}
+}
+
+// MatchClient is a client for the Match schema.
+type MatchClient struct {
+	config
+}
+
+// NewMatchClient returns a client for the Match from the given config.
+func NewMatchClient(c config) *MatchClient {
+	return &MatchClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `match.Hooks(f(g(h())))`.
+func (c *MatchClient) Use(hooks ...Hook) {
+	c.hooks.Match = append(c.hooks.Match, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `match.Intercept(f(g(h())))`.
+func (c *MatchClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Match = append(c.inters.Match, interceptors...)
+}
+
+// Create returns a builder for creating a Match entity.
+func (c *MatchClient) Create() *MatchCreate {
+	mutation := newMatchMutation(c.config, OpCreate)
+	return &MatchCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Match entities.
+func (c *MatchClient) CreateBulk(builders ...*MatchCreate) *MatchCreateBulk {
+	return &MatchCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MatchClient) MapCreateBulk(slice any, setFunc func(*MatchCreate, int)) *MatchCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MatchCreateBulk{err: fmt.Errorf("calling to MatchClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MatchCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MatchCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Match.
+func (c *MatchClient) Update() *MatchUpdate {
+	mutation := newMatchMutation(c.config, OpUpdate)
+	return &MatchUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MatchClient) UpdateOne(_m *Match) *MatchUpdateOne {
+	mutation := newMatchMutation(c.config, OpUpdateOne, withMatch(_m))
+	return &MatchUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MatchClient) UpdateOneID(id uuid.UUID) *MatchUpdateOne {
+	mutation := newMatchMutation(c.config, OpUpdateOne, withMatchID(id))
+	return &MatchUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Match.
+func (c *MatchClient) Delete() *MatchDelete {
+	mutation := newMatchMutation(c.config, OpDelete)
+	return &MatchDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MatchClient) DeleteOne(_m *Match) *MatchDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MatchClient) DeleteOneID(id uuid.UUID) *MatchDeleteOne {
+	builder := c.Delete().Where(match.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MatchDeleteOne{builder}
+}
+
+// Query returns a query builder for Match.
+func (c *MatchClient) Query() *MatchQuery {
+	return &MatchQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMatch},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Match entity by its id.
+func (c *MatchClient) Get(ctx context.Context, id uuid.UUID) (*Match, error) {
+	return c.Query().Where(match.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MatchClient) GetX(ctx context.Context, id uuid.UUID) *Match {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRoom queries the room edge of a Match.
+func (c *MatchClient) QueryRoom(_m *Match) *GameRoomQuery {
+	query := (&GameRoomClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(gameroom.Table, gameroom.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, match.RoomTable, match.RoomColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWhitePlayer queries the white_player edge of a Match.
+func (c *MatchClient) QueryWhitePlayer(_m *Match) *ParticipantQuery {
+	query := (&ParticipantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, match.WhitePlayerTable, match.WhitePlayerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlackPlayer queries the black_player edge of a Match.
+func (c *MatchClient) QueryBlackPlayer(_m *Match) *ParticipantQuery {
+	query := (&ParticipantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, match.BlackPlayerTable, match.BlackPlayerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMoves queries the moves edge of a Match.
+func (c *MatchClient) QueryMoves(_m *Match) *MatchMoveQuery {
+	query := (&MatchMoveClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(matchmove.Table, matchmove.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, match.MovesTable, match.MovesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MatchClient) Hooks() []Hook {
+	return c.hooks.Match
+}
+
+// Interceptors returns the client interceptors.
+func (c *MatchClient) Interceptors() []Interceptor {
+	return c.inters.Match
+}
+
+func (c *MatchClient) mutate(ctx context.Context, m *MatchMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MatchCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MatchUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MatchUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MatchDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Match mutation op: %q", m.Op())
+	}
+}
+
+// MatchMoveClient is a client for the MatchMove schema.
+type MatchMoveClient struct {
+	config
+}
+
+// NewMatchMoveClient returns a client for the MatchMove from the given config.
+func NewMatchMoveClient(c config) *MatchMoveClient {
+	return &MatchMoveClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `matchmove.Hooks(f(g(h())))`.
+func (c *MatchMoveClient) Use(hooks ...Hook) {
+	c.hooks.MatchMove = append(c.hooks.MatchMove, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `matchmove.Intercept(f(g(h())))`.
+func (c *MatchMoveClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MatchMove = append(c.inters.MatchMove, interceptors...)
+}
+
+// Create returns a builder for creating a MatchMove entity.
+func (c *MatchMoveClient) Create() *MatchMoveCreate {
+	mutation := newMatchMoveMutation(c.config, OpCreate)
+	return &MatchMoveCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MatchMove entities.
+func (c *MatchMoveClient) CreateBulk(builders ...*MatchMoveCreate) *MatchMoveCreateBulk {
+	return &MatchMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MatchMoveClient) MapCreateBulk(slice any, setFunc func(*MatchMoveCreate, int)) *MatchMoveCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MatchMoveCreateBulk{err: fmt.Errorf("calling to MatchMoveClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MatchMoveCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MatchMoveCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MatchMove.
+func (c *MatchMoveClient) Update() *MatchMoveUpdate {
+	mutation := newMatchMoveMutation(c.config, OpUpdate)
+	return &MatchMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MatchMoveClient) UpdateOne(_m *MatchMove) *MatchMoveUpdateOne {
+	mutation := newMatchMoveMutation(c.config, OpUpdateOne, withMatchMove(_m))
+	return &MatchMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MatchMoveClient) UpdateOneID(id uuid.UUID) *MatchMoveUpdateOne {
+	mutation := newMatchMoveMutation(c.config, OpUpdateOne, withMatchMoveID(id))
+	return &MatchMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MatchMove.
+func (c *MatchMoveClient) Delete() *MatchMoveDelete {
+	mutation := newMatchMoveMutation(c.config, OpDelete)
+	return &MatchMoveDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MatchMoveClient) DeleteOne(_m *MatchMove) *MatchMoveDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MatchMoveClient) DeleteOneID(id uuid.UUID) *MatchMoveDeleteOne {
+	builder := c.Delete().Where(matchmove.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MatchMoveDeleteOne{builder}
+}
+
+// Query returns a query builder for MatchMove.
+func (c *MatchMoveClient) Query() *MatchMoveQuery {
+	return &MatchMoveQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMatchMove},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MatchMove entity by its id.
+func (c *MatchMoveClient) Get(ctx context.Context, id uuid.UUID) (*MatchMove, error) {
+	return c.Query().Where(matchmove.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MatchMoveClient) GetX(ctx context.Context, id uuid.UUID) *MatchMove {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryMatch queries the match edge of a MatchMove.
+func (c *MatchMoveClient) QueryMatch(_m *MatchMove) *MatchQuery {
+	query := (&MatchClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(matchmove.Table, matchmove.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, matchmove.MatchTable, matchmove.MatchColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MatchMoveClient) Hooks() []Hook {
+	return c.hooks.MatchMove
+}
+
+// Interceptors returns the client interceptors.
+func (c *MatchMoveClient) Interceptors() []Interceptor {
+	return c.inters.MatchMove
+}
+
+func (c *MatchMoveClient) mutate(ctx context.Context, m *MatchMoveMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MatchMoveCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MatchMoveUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MatchMoveUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MatchMoveDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MatchMove mutation op: %q", m.Op())
+	}
+}
+
+// ParticipantClient is a client for the Participant schema.
+type ParticipantClient struct {
+	config
+}
+
+// NewParticipantClient returns a client for the Participant from the given config.
+func NewParticipantClient(c config) *ParticipantClient {
+	return &ParticipantClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `participant.Hooks(f(g(h())))`.
+func (c *ParticipantClient) Use(hooks ...Hook) {
+	c.hooks.Participant = append(c.hooks.Participant, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `participant.Intercept(f(g(h())))`.
+func (c *ParticipantClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Participant = append(c.inters.Participant, interceptors...)
+}
+
+// Create returns a builder for creating a Participant entity.
+func (c *ParticipantClient) Create() *ParticipantCreate {
+	mutation := newParticipantMutation(c.config, OpCreate)
+	return &ParticipantCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Participant entities.
+func (c *ParticipantClient) CreateBulk(builders ...*ParticipantCreate) *ParticipantCreateBulk {
+	return &ParticipantCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ParticipantClient) MapCreateBulk(slice any, setFunc func(*ParticipantCreate, int)) *ParticipantCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ParticipantCreateBulk{err: fmt.Errorf("calling to ParticipantClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ParticipantCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ParticipantCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Participant.
+func (c *ParticipantClient) Update() *ParticipantUpdate {
+	mutation := newParticipantMutation(c.config, OpUpdate)
+	return &ParticipantUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ParticipantClient) UpdateOne(_m *Participant) *ParticipantUpdateOne {
+	mutation := newParticipantMutation(c.config, OpUpdateOne, withParticipant(_m))
+	return &ParticipantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ParticipantClient) UpdateOneID(id uuid.UUID) *ParticipantUpdateOne {
+	mutation := newParticipantMutation(c.config, OpUpdateOne, withParticipantID(id))
+	return &ParticipantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Participant.
+func (c *ParticipantClient) Delete() *ParticipantDelete {
+	mutation := newParticipantMutation(c.config, OpDelete)
+	return &ParticipantDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ParticipantClient) DeleteOne(_m *Participant) *ParticipantDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ParticipantClient) DeleteOneID(id uuid.UUID) *ParticipantDeleteOne {
+	builder := c.Delete().Where(participant.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ParticipantDeleteOne{builder}
+}
+
+// Query returns a query builder for Participant.
+func (c *ParticipantClient) Query() *ParticipantQuery {
+	return &ParticipantQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeParticipant},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Participant entity by its id.
+func (c *ParticipantClient) Get(ctx context.Context, id uuid.UUID) (*Participant, error) {
+	return c.Query().Where(participant.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ParticipantClient) GetX(ctx context.Context, id uuid.UUID) *Participant {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRoom queries the room edge of a Participant.
+func (c *ParticipantClient) QueryRoom(_m *Participant) *GameRoomQuery {
+	query := (&GameRoomClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(participant.Table, participant.FieldID, id),
+			sqlgraph.To(gameroom.Table, gameroom.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, participant.RoomTable, participant.RoomColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a Participant.
+func (c *ParticipantClient) QueryUser(_m *Participant) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(participant.Table, participant.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, participant.UserTable, participant.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWhiteMatches queries the white_matches edge of a Participant.
+func (c *ParticipantClient) QueryWhiteMatches(_m *Participant) *MatchQuery {
+	query := (&MatchClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(participant.Table, participant.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, participant.WhiteMatchesTable, participant.WhiteMatchesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlackMatches queries the black_matches edge of a Participant.
+func (c *ParticipantClient) QueryBlackMatches(_m *Participant) *MatchQuery {
+	query := (&MatchClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(participant.Table, participant.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, participant.BlackMatchesTable, participant.BlackMatchesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ParticipantClient) Hooks() []Hook {
+	return c.hooks.Participant
+}
+
+// Interceptors returns the client interceptors.
+func (c *ParticipantClient) Interceptors() []Interceptor {
+	return c.inters.Participant
+}
+
+func (c *ParticipantClient) mutate(ctx context.Context, m *ParticipantMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ParticipantCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ParticipantUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ParticipantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ParticipantDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Participant mutation op: %q", m.Op())
 	}
 }
 
@@ -326,6 +1088,38 @@ func (c *UserClient) QueryPassword(_m *User) *UserPasswordQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(userpassword.Table, userpassword.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, user.PasswordTable, user.PasswordColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAdministeredRooms queries the administered_rooms edge of a User.
+func (c *UserClient) QueryAdministeredRooms(_m *User) *GameRoomQuery {
+	query := (&GameRoomClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(gameroom.Table, gameroom.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AdministeredRoomsTable, user.AdministeredRoomsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParticipations queries the participations edge of a User.
+func (c *UserClient) QueryParticipations(_m *User) *ParticipantQuery {
+	query := (&ParticipantClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(participant.Table, participant.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ParticipationsTable, user.ParticipationsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -510,9 +1304,9 @@ func (c *UserPasswordClient) mutate(ctx context.Context, m *UserPasswordMutation
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User, UserPassword []ent.Hook
+		GameRoom, Match, MatchMove, Participant, User, UserPassword []ent.Hook
 	}
 	inters struct {
-		User, UserPassword []ent.Interceptor
+		GameRoom, Match, MatchMove, Participant, User, UserPassword []ent.Interceptor
 	}
 )
