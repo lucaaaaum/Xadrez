@@ -17,6 +17,7 @@ func main() {
 	board := components.NewBoardRenderer(rl.Vector2{X: 800, Y: 600}, &chess.Match{
 		Board: boardPieces,
 	})
+	defer board.Unload()
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
