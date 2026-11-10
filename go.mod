@@ -5,6 +5,7 @@ go 1.27.3
 require (
 	charm.land/log/v2 v2.0.1
 	entgo.io/ent v0.14.6
+	github.com/gen2brain/raylib-go/raygui v0.0.0-20260815042312-80156a59a482
 	github.com/gen2brain/raylib-go/raylib v0.60.1
 	github.com/google/uuid v1.6.0
 	golang.org/x/crypto v0.58.0

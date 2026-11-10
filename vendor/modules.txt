@@ -77,6 +77,9 @@ github.com/ebitengine/purego
 github.com/ebitengine/purego/internal/cgo
 github.com/ebitengine/purego/internal/fakecgo
 github.com/ebitengine/purego/internal/strings
+# github.com/gen2brain/raylib-go/raygui v0.0.0-20260815042312-80156a59a482
+## explicit; go 1.25.0
+github.com/gen2brain/raylib-go/raygui
 # github.com/gen2brain/raylib-go/raylib v0.60.1
 ## explicit; go 1.21
 github.com/gen2brain/raylib-go/raylib

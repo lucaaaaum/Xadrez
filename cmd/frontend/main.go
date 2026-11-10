@@ -1,8 +1,9 @@
 package main
 
 import (
+	"context"
 	"xadrez/cmd/frontend/components"
-	"xadrez/internal/domain/chess"
+	"xadrez/cmd/frontend/screens"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -13,16 +14,23 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
-	boardPieces := chess.NewGame().GetBoard()
-	board := components.NewBoardRenderer(rl.Vector2{X: 800, Y: 600}, &chess.Match{
-		Board: boardPieces,
-	})
-	defer board.Unload()
+	var currentScreen components.Screen = screens.NewMainMenuScreen(rl.Vector2{X: 800, Y: 600})
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.RayWhite)
-		board.Render()
+
+		if currentScreen == nil {
+			break
+		}
+
+		next, err := currentScreen.Update(context.Background())
+		if err != nil {
+			panic(err)
+		}
+		currentScreen.Render()
+		currentScreen = next
+
 		rl.EndDrawing()
 	}
 }
