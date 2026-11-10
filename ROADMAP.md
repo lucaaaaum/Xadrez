@@ -29,8 +29,8 @@
 ### Correções
 
 - [x] Import inexistente de `uuid` em `internal/infra/auth.go`.
-- [ ] Receivers por ponteiro nos serviços em memória, para que o estado persista.
-- [ ] Acesso concorrente seguro ao estado compartilhado.
+- [x] Receivers por ponteiro nos serviços em memória, para que o estado persista.
+- [x] Acesso concorrente seguro ao estado compartilhado.
 - [x] Remoção do usuário em `RegisterUserLogout`.
 
 ## Usuários
@@ -38,12 +38,12 @@
 ### Cadastro
 
 - [ ] Cadastro com nome de usuário e senha, separado do login.
-- [ ] Nome de usuário único.
+- [x] Nome de usuário único.
 
 ### Autenticação
 
-- [ ] Login.
-- [ ] Logout.
+- [x] Login.
+- [x] Logout.
 
 ### Online
 
@@ -111,7 +111,7 @@
 
 - [x] Banco de dados para usuários.
 - [ ] Eventos do servidor gravados no banco.
-- [ ] Histórico de partidas.
+- [x] Histórico de partidas.
 - [x] Decidir: banco (SQLite por ora, com migração para Postgres se necessário).
 
 ## Cliente
