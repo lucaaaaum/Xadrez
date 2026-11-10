@@ -1,6 +1,11 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"xadrez/cmd/frontend/components"
+	"xadrez/internal/domain/chess"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 func main() {
 	rl.InitWindow(800, 600, "Hello World")
@@ -8,10 +13,15 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
+	boardPieces := chess.NewGame().GetBoard()
+	board := components.NewBoardRenderer(rl.Vector2{X: 800, Y: 600}, &chess.Match{
+		Board: boardPieces,
+	})
+
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.RayWhite)
-		rl.DrawText("Hello, World!", 190, 200, 20, rl.LightGray)
+		board.Render()
 		rl.EndDrawing()
 	}
 }
