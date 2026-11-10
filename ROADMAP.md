@@ -5,7 +5,7 @@
 ### Conexão
 
 - [x] Servidor TCP que aceita várias conexões simultâneas.
-- [ ] Porta lida da configuração.
+- [x] Porta lida da configuração.
 - [x] Sessão por conexão, associando a conexão ao usuário autenticado.
 - [x] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
@@ -29,8 +29,8 @@
 ### Correções
 
 - [x] Import inexistente de `uuid` em `internal/infra/auth.go`.
-- [ ] Receivers por ponteiro nos serviços em memória, para que o estado persista.
-- [ ] Acesso concorrente seguro ao estado compartilhado.
+- [x] Receivers por ponteiro nos serviços em memória, para que o estado persista.
+- [x] Acesso concorrente seguro ao estado compartilhado.
 - [x] Remoção do usuário em `RegisterUserLogout`.
 
 ## Usuários
@@ -38,12 +38,12 @@
 ### Cadastro
 
 - [ ] Cadastro com nome de usuário e senha, separado do login.
-- [ ] Nome de usuário único.
+- [x] Nome de usuário único.
 
 ### Autenticação
 
-- [ ] Login.
-- [ ] Logout.
+- [x] Login.
+- [x] Logout.
 
 ### Online
 
@@ -61,7 +61,7 @@
 - [ ] Sair da sala.
 - [x] Administrador escolhe os jogadores branco e preto e inicia a partida.
 - [x] Uma partida por vez na sala.
-- [ ] Nova partida na mesma sala após o fim da anterior.
+- [x] Nova partida na mesma sala após o fim da anterior.
 - [ ] Administrador bane um participante.
 - [ ] Banido impedido de entrar de novo.
 - [ ] Transferência de administrador quando ele sai.
@@ -80,26 +80,26 @@
 
 - [x] Decidir: biblioteca de xadrez ou implementação própria.
 - [x] Movimento básico de cada peça.
-- [ ] Lances restritos aos limites do tabuleiro.
-- [ ] Caminho livre para bispo, torre, dama e avanço do peão.
-- [ ] Captura do peão na diagonal, sem captura no avanço reto.
-- [ ] Lance que deixa o próprio rei em xeque é rejeitado.
+- [x] Lances restritos aos limites do tabuleiro.
+- [x] Caminho livre para bispo, torre, dama e avanço do peão.
+- [x] Captura do peão na diagonal, sem captura no avanço reto.
+- [x] Lance que deixa o próprio rei em xeque é rejeitado.
 - [ ] Roque, sem passar por casa atacada e com rei e torre sem terem se movido.
 - [ ] En passant.
-- [ ] Promoção, com a peça escolhida no `MoveRequest`.
+- [x] Promoção, com a peça escolhida no `MoveRequest`.
 - [ ] Turnos, com a fila de ações por partida.
-- [ ] Tabuleiro atualizado para os dois jogadores a cada lance.
+- [x] Tabuleiro atualizado para jogadores e espectadores a cada lance.
 - [x] Erros do domínio enviados ao cliente como erro de cliente.
 - [x] Nome de sala único na criação.
 - [ ] `HandleValidateMoveRequest` validando sem executar o lance.
 
 ### Fim de jogo
 
-- [ ] Xeque-mate.
-- [ ] Afogamento.
+- [x] Xeque-mate.
+- [x] Afogamento.
 - [ ] Empate por 50 lances, repetição tripla e material insuficiente.
-- [ ] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
-- [ ] Desistência, com vitória concedida ao oponente.
+- [x] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
+- [x] Desistência, com vitória concedida ao oponente.
 - [ ] Vitória por desconexão do oponente.
 
 ## Eventos
@@ -111,7 +111,7 @@
 
 - [x] Banco de dados para usuários.
 - [ ] Eventos do servidor gravados no banco.
-- [ ] Histórico de partidas.
+- [x] Histórico de partidas.
 - [x] Decidir: banco (SQLite por ora, com migração para Postgres se necessário).
 
 ## Cliente
@@ -136,7 +136,7 @@
 
 ## Testes
 
-- [ ] Testes unitários das regras do xadrez.
+- [x] Testes unitários das regras do xadrez.
 - [ ] Testes funcionais cobrindo todos os resultados de partida.
 - [ ] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).

@@ -16,6 +16,7 @@ import (
 )
 
 const defaultDatabaseDSN = "file:xadrez.db?_pragma=foreign_keys(1)"
+const defaultAddress = ":9000"
 
 type Services struct {
 	loginService auth.LoginService
@@ -49,10 +50,11 @@ func registerHandlers(handlerManager *tcp.HandlerManager, services Services, not
 	handlerManager.RegisterRequestHandler("list_rooms", roomHandler.HandleListRooms)
 	handlerManager.RegisterRequestHandler("invite_to_room", roomHandler.HandleInviteToRoom)
 
-	matchHandler := handlers.NewMatchHandler(services.matchService)
+	matchHandler := handlers.NewMatchHandler(services.matchService, services.roomService, notifier)
 	handlerManager.RegisterRequestHandler("start_match", matchHandler.HandleStartMatch)
 	handlerManager.RegisterRequestHandler("get_match", matchHandler.HandleGetMatch)
 	handlerManager.RegisterRequestHandler("make_move", matchHandler.HandleMakeMove)
+	handlerManager.RegisterRequestHandler("resign", matchHandler.HandleResign)
 
 }
 
@@ -71,7 +73,11 @@ func main() {
 	handlerManager := tcp.NewHandlerManager()
 	server := tcp.NewTCPServer(handlerManager)
 	registerHandlers(handlerManager, services, server)
-	if err := server.ListenAndServe(":9000"); err != nil {
+	address := os.Getenv("XADREZ_ADDRESS")
+	if address == "" {
+		address = defaultAddress
+	}
+	if err := server.ListenAndServe(address); err != nil {
 		log.Fatal("erro no servidor", "erro", err)
 	}
 }
