@@ -12,6 +12,7 @@ var (
 	darkTile      = rl.NewColor(120, 70, 160, 255)
 	selectedTile  = rl.NewColor(255, 255, 255, 110)
 	highlightTile = rl.NewColor(80, 220, 120, 110)
+	checkTile     = rl.NewColor(230, 40, 40, 150)
 )
 
 type Square struct {
@@ -61,6 +62,7 @@ type BoardView struct {
 	Layout     BoardLayout
 	Pieces     [8][8]*messages.Piece
 	Selected   *Square
+	Check      *Square
 	Highlights []Square
 }
 
@@ -120,6 +122,9 @@ func (b *BoardRenderer) Render(view BoardView) {
 
 	for _, s := range view.Highlights {
 		rl.DrawRectangleV(view.Layout.squarePosition(s), tileSize, highlightTile)
+	}
+	if view.Check != nil {
+		rl.DrawRectangleV(view.Layout.squarePosition(*view.Check), tileSize, checkTile)
 	}
 	if view.Selected != nil {
 		rl.DrawRectangleV(view.Layout.squarePosition(*view.Selected), tileSize, selectedTile)
