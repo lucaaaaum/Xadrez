@@ -107,6 +107,27 @@ func (s *MatchScreen) PushError(message string) {
 	s.inbox.errors = append(s.inbox.errors, message)
 }
 
+func (s *MatchScreen) HandleEvent(event components.Event) {
+	if message, ok := errorMessage(event); ok {
+		s.PushError(message)
+		return
+	}
+	switch event.Type {
+	case "match_updated", "make_move_ok", "resign_ok", "get_match_ok":
+		if match, ok := event.Payload.(messages.MatchResponse); ok && match.Room == s.match.Room {
+			s.PushMatch(match)
+		}
+	case "list_rooms_ok":
+		if response, ok := event.Payload.(messages.ListRoomsResponse); ok {
+			for _, room := range response.Rooms {
+				if room.Room == s.match.Room {
+					s.PushRoom(room)
+				}
+			}
+		}
+	}
+}
+
 func (s *MatchScreen) Update(ctx context.Context) (components.Screen, error) {
 	s.drainInbox()
 	s.handleAction()
