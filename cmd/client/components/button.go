@@ -1,9 +1,16 @@
 package components
 
-import rl "github.com/gen2brain/raylib-go/raylib"
-import rg "github.com/gen2brain/raylib-go/raygui"
+import (
+	"slices"
+
+	"github.com/google/uuid"
+
+	rg "github.com/gen2brain/raylib-go/raygui"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 type Button struct {
+	id        uuid.UUID
 	text      string
 	bounds    rl.Rectangle
 	action    func()
@@ -12,6 +19,7 @@ type Button struct {
 
 func NewButton(text string, bounds rl.Rectangle, action func()) *Button {
 	return &Button{
+		id:     uuid.Must(uuid.NewV7()),
 		text:   text,
 		bounds: bounds,
 		action: action,
@@ -39,9 +47,16 @@ func NewButtonList(position rl.Vector2, size rl.Vector2) *ButtonList {
 	}
 }
 
-func (bl *ButtonList) AddNewButton(text string, action func()) {
+func (bl *ButtonList) AddNewButton(text string, action func()) uuid.UUID {
 	button := NewButton(text, rl.Rectangle{}, action)
 	bl.buttons = append(bl.buttons, button)
+	return button.id
+}
+
+func (bl *ButtonList) RemoveButton(buttonId uuid.UUID) {
+	bl.buttons = slices.DeleteFunc(bl.buttons, func(button *Button) bool {
+		return button.id == buttonId
+	})
 }
 
 func (bl *ButtonList) Render() {
@@ -57,8 +72,9 @@ func (bl *ButtonList) Render() {
 }
 
 func (bl *ButtonList) Update() {
-	for _, button := range bl.buttons {
+	for _, button := range slices.Clone(bl.buttons) {
 		if button.IsPressed() {
+			button.isPressed = false
 			button.action()
 		}
 	}

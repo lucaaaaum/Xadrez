@@ -185,28 +185,40 @@ func (b *board) hasLegalMove(color PieceColor) bool {
 	for fromX := range 8 {
 		for fromY := range 8 {
 			p := b.getPieceAt(fromX, fromY)
-			if p == nil || p.color != color {
-				continue
-			}
-			for toX := range 8 {
-				for toY := range 8 {
-					target := b.getPieceAt(toX, toY)
-					if target != nil && target.color == color {
-						continue
-					}
-					if !b.canMove(p, fromX, fromY, toX, toY) {
-						continue
-					}
-					next := *b
-					next.apply(fromX, fromY, toX, toY, Queen)
-					if !next.inCheck(color) {
-						return true
-					}
-				}
+			if p != nil && p.color == color && len(b.legalMoves(fromX, fromY)) > 0 {
+				return true
 			}
 		}
 	}
 	return false
+}
+
+func (b *board) legalMoves(fromX, fromY int) []Square {
+	if !inBounds(fromX, fromY) {
+		return nil
+	}
+	p := b.getPieceAt(fromX, fromY)
+	if p == nil {
+		return nil
+	}
+	var moves []Square
+	for toX := range 8 {
+		for toY := range 8 {
+			target := b.getPieceAt(toX, toY)
+			if target != nil && target.color == p.color {
+				continue
+			}
+			if !b.canMove(p, fromX, fromY, toX, toY) {
+				continue
+			}
+			next := *b
+			next.apply(fromX, fromY, toX, toY, Queen)
+			if !next.inCheck(p.color) {
+				moves = append(moves, Square{X: toX, Y: toY})
+			}
+		}
+	}
+	return moves
 }
 
 func inBounds(x, y int) bool {

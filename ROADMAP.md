@@ -6,6 +6,7 @@
 
 - [x] Servidor TCP que aceita várias conexões simultâneas.
 - [x] Porta lida da configuração.
+- [ ] Configuração em arquivo TOML (endereço, banco), hoje lida de variáveis de ambiente.
 - [x] Sessão por conexão, associando a conexão ao usuário autenticado.
 - [x] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
@@ -37,7 +38,7 @@
 
 ### Cadastro
 
-- [ ] Cadastro com nome de usuário e senha, separado do login.
+- [x] Cadastro com nome de usuário e senha, feito automaticamente no primeiro login.
 - [x] Nome de usuário único.
 
 ### Autenticação
@@ -70,7 +71,7 @@
 
 - [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
 - [x] Convite entregue ao convidado em tempo real.
-- [ ] Aceitar convite, entrando na sala como participante.
+- [x] Aceitar convite, entrando na sala como participante.
 - [ ] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
 - [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
@@ -116,11 +117,18 @@
 
 ## Cliente
 
-- [ ] Cliente com raylib.
-- [ ] Telas de cadastro e login.
-- [ ] Lista de usuários online e convites.
-- [ ] Tabuleiro jogável.
-- [ ] Tela de resultado.
+- [x] Cliente com raylib.
+- [x] Tela unificada de cadastro e login.
+- [x] Lista de usuários online e convites.
+- [x] Tabuleiro jogável.
+- [x] Tela de resultado.
+- [x] Configuração em arquivo TOML (endereço do servidor), editável por uma tela do cliente.
+- [x] Janela redimensionável, com os elementos ajustados ao novo tamanho.
+- [x] Reconexão ao servidor, com retorno ao login ao sair ou quando a conexão cai.
+- [x] Destaque do último lance e das casas válidas da peça selecionada, com coordenadas no tabuleiro.
+- [x] Partida aberta automaticamente para os jogadores quando começa, em qualquer tela.
+- [x] Erros de requisições de telas anteriores descartados, pela correlação do `id`.
+- [x] Atalhos de teclado: Enter para confirmar, Esc para voltar ou cancelar.
 
 ## Opcionais
 

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"os"
-	"xadrez/cmd/backend/handlers"
+	"xadrez/cmd/server/handlers"
 	"xadrez/ent"
 	"xadrez/internal/domain/auth"
 	"xadrez/internal/domain/chess"

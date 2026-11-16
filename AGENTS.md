@@ -11,7 +11,7 @@ Servidor de xadrez multiplayer sobre TCP em Go (projeto da disciplina de Redes d
 O ambiente vem do `flake.nix` (Go 1.27, gopls, gotools, netcat, ent) via direnv (`use flake`) ou `nix develop`. As dependências estão em `vendor/`, então build e testes usam o vendor por padrão.
 
 - Build: `go build ./...`
-- Rodar o servidor (escuta em `:9000`): `go run ./cmd/backend`
+- Rodar o servidor (escuta em `:9000`): `go run ./cmd/server`
 - Testes: `go test ./internal/...` / um teste: `go test ./internal/domain/chess -run NomeDoTeste`
 - Regenerar o código do ent após mudar `ent/schema/`: `go generate ./ent` (todo o resto de `ent/` é gerado; não editar à mão)
 - Testar o protocolo manualmente: `nc localhost 9000` e enviar uma linha JSON, ex.: `{"id":"1","type":"login","payload":{"name":"a","password":"b"}}`
@@ -26,7 +26,7 @@ Camadas em `internal/`, só estas três:
 - `infra/` — implementações dos serviços (persistência via ent, hash Argon2id em `password.go`, estado em memória) e o transporte em `infra/tcp/`.
 - `application/messages/` — payloads JSON de requisição/resposta compartilhados entre servidor e cliente. Payloads novos vão aqui.
 
-`cmd/backend/main.go` monta os serviços, cria os handlers (`cmd/backend/handlers/`) e registra cada tipo de mensagem no `HandlerManager`.
+`cmd/server/main.go` monta os serviços, cria os handlers (`cmd/server/handlers/`) e registra cada tipo de mensagem no `HandlerManager`.
 
 ### Protocolo TCP (`internal/infra/tcp/`)
 

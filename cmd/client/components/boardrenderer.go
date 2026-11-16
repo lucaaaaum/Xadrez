@@ -1,6 +1,8 @@
 package components
 
 import (
+	"math"
+	"strconv"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
 
@@ -8,16 +10,15 @@ import (
 )
 
 var (
-	lightTile     = rl.NewColor(240, 160, 70, 255)
-	darkTile      = rl.NewColor(120, 70, 160, 255)
-	selectedTile  = rl.NewColor(255, 255, 255, 110)
-	highlightTile = rl.NewColor(80, 220, 120, 110)
-	checkTile     = rl.NewColor(230, 40, 40, 150)
+	lightTile    = rl.NewColor(240, 160, 70, 255)
+	darkTile     = rl.NewColor(120, 70, 160, 255)
+	selectedTile = rl.NewColor(255, 255, 255, 110)
+	lastMoveTile = rl.NewColor(250, 230, 60, 120)
+	moveDot      = rl.NewColor(30, 30, 30, 90)
+	checkTile    = rl.NewColor(230, 40, 40, 150)
 )
 
-type Square struct {
-	X, Y int
-}
+type Square = chess.Square
 
 type BoardLayout struct {
 	Bounds  rl.Rectangle
@@ -25,7 +26,7 @@ type BoardLayout struct {
 }
 
 func (l BoardLayout) tileSize() float32 {
-	return min(l.Bounds.Width, l.Bounds.Height) / 8
+	return float32(math.Floor(float64(min(l.Bounds.Width, l.Bounds.Height) / 8)))
 }
 
 func (l BoardLayout) squarePosition(s Square) rl.Vector2 {
@@ -59,11 +60,12 @@ func (l BoardLayout) SquareAt(point rl.Vector2) (Square, bool) {
 }
 
 type BoardView struct {
-	Layout     BoardLayout
-	Pieces     [8][8]*messages.Piece
-	Selected   *Square
-	Check      *Square
-	Highlights []Square
+	Layout   BoardLayout
+	Pieces   [8][8]*messages.Piece
+	Selected *Square
+	Check    *Square
+	LastMove []Square
+	Moves    []Square
 }
 
 type sprite struct {
@@ -120,8 +122,8 @@ func (b *BoardRenderer) Render(view BoardView) {
 		}
 	}
 
-	for _, s := range view.Highlights {
-		rl.DrawRectangleV(view.Layout.squarePosition(s), tileSize, highlightTile)
+	for _, s := range view.LastMove {
+		rl.DrawRectangleV(view.Layout.squarePosition(s), tileSize, lastMoveTile)
 	}
 	if view.Check != nil {
 		rl.DrawRectangleV(view.Layout.squarePosition(*view.Check), tileSize, checkTile)
@@ -137,6 +139,44 @@ func (b *BoardRenderer) Render(view BoardView) {
 			}
 		}
 	}
+
+	b.renderCoordinates(view.Layout, tile)
+
+	for _, s := range view.Moves {
+		center := rl.Vector2Add(view.Layout.squarePosition(s), rl.Vector2{X: tile / 2, Y: tile / 2})
+		if view.Pieces[s.X][s.Y] != nil {
+			rl.DrawRing(center, tile*0.42, tile*0.5, 0, 360, 32, moveDot)
+		} else {
+			rl.DrawCircleV(center, tile*0.16, moveDot)
+		}
+	}
+}
+
+func (b *BoardRenderer) renderCoordinates(layout BoardLayout, tile float32) {
+	size := max(int32(tile*0.2), 10)
+	padding := tile * 0.05
+	for i := range 8 {
+		file, rank := Square{X: i, Y: 0}, Square{X: 0, Y: i}
+		if layout.Flipped {
+			file.Y, rank.X = 7, 7
+		}
+
+		letter := string(rune('a' + i))
+		position := layout.squarePosition(file)
+		x := int32(position.X+tile-padding) - rl.MeasureText(letter, size)
+		y := int32(position.Y+tile-padding) - size
+		rl.DrawText(letter, x, y, size, coordinateColor(file))
+
+		position = layout.squarePosition(rank)
+		rl.DrawText(strconv.Itoa(i+1), int32(position.X+padding), int32(position.Y+padding), size, coordinateColor(rank))
+	}
+}
+
+func coordinateColor(s Square) rl.Color {
+	if (s.X+s.Y)%2 == 0 {
+		return lightTile
+	}
+	return darkTile
 }
 
 func (b *BoardRenderer) renderPiece(piece messages.Piece, position rl.Vector2, tile float32) {
