@@ -34,6 +34,7 @@ const (
 
 	sidebarButtonHeight float32 = 40
 	sidebarButtonStep   float32 = 50
+	maxLastMoveSquares          = 4
 )
 
 var promotionChoices = []struct {
@@ -54,6 +55,8 @@ type MatchScreen struct {
 	match         messages.MatchResponse
 	spectators    []string
 	selected      *components.Square
+	moves         []components.Square
+	lastMove      []components.Square
 	promotion     *messages.MoveRequest
 	waiting       bool
 	confirmResign bool
@@ -105,6 +108,12 @@ func (s *MatchScreen) HandleEvent(event components.Event) {
 }
 
 func (s *MatchScreen) applyMatch(match messages.MatchResponse) {
+	if changed := changedSquares(s.match.Pieces, match.Pieces); len(changed) > 0 {
+		s.lastMove = nil
+		if len(changed) <= maxLastMoveSquares {
+			s.lastMove = changed
+		}
+	}
 	s.match = match
 	s.waiting = false
 	s.deselect()
@@ -189,6 +198,10 @@ func (s *MatchScreen) handleBoardClick() {
 	if s.selected == nil {
 		return
 	}
+	if !slices.Contains(s.moves, square) {
+		s.deselect()
+		return
+	}
 
 	request := messages.MoveRequest{
 		Room:  s.match.Room,
@@ -207,10 +220,24 @@ func (s *MatchScreen) handleBoardClick() {
 
 func (s *MatchScreen) selectSquare(square components.Square) {
 	s.selected = &square
+	s.moves = chess.LegalMoves(s.position(), square.X, square.Y)
 }
 
 func (s *MatchScreen) deselect() {
 	s.selected = nil
+	s.moves = nil
+}
+
+func (s *MatchScreen) position() [8][8]*chess.PlacedPiece {
+	var position [8][8]*chess.PlacedPiece
+	for x, column := range s.match.Pieces {
+		for y, piece := range column {
+			if piece != nil {
+				position[x][y] = &chess.PlacedPiece{Kind: piece.Kind, Color: piece.Color}
+			}
+		}
+	}
+	return position
 }
 
 func (s *MatchScreen) sendMove(request messages.MoveRequest) {
@@ -295,6 +322,8 @@ func (s *MatchScreen) Render() error {
 		Pieces:   s.match.Pieces,
 		Selected: s.selected,
 		Check:    s.checkSquare(),
+		LastMove: s.lastMove,
+		Moves:    s.moves,
 	})
 
 	s.renderSidebar(layout.Bounds.X + layout.Bounds.Width + margin)
@@ -427,6 +456,25 @@ func (s *MatchScreen) outcomeText() string {
 		return fmt.Sprintf("Desistência. Vencedor: %s", s.match.Winner)
 	}
 	return string(s.match.Outcome)
+}
+
+func changedSquares(before, after [8][8]*messages.Piece) []components.Square {
+	var changed []components.Square
+	for x := range 8 {
+		for y := range 8 {
+			if !samePiece(before[x][y], after[x][y]) {
+				changed = append(changed, components.Square{X: x, Y: y})
+			}
+		}
+	}
+	return changed
+}
+
+func samePiece(a, b *messages.Piece) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return *a == *b
 }
 
 func wrapText(text string, size, width int32) []string {
