@@ -124,6 +124,11 @@
 - [x] Tela de resultado.
 - [x] Configuração em arquivo TOML (endereço do servidor), editável por uma tela do cliente.
 - [x] Janela redimensionável, com os elementos ajustados ao novo tamanho.
+- [x] Reconexão ao servidor, com retorno ao login ao sair ou quando a conexão cai.
+- [x] Destaque do último lance e das casas válidas da peça selecionada, com coordenadas no tabuleiro.
+- [x] Partida aberta automaticamente para os jogadores quando começa, em qualquer tela.
+- [x] Erros de requisições de telas anteriores descartados, pela correlação do `id`.
+- [x] Atalhos de teclado: Enter para confirmar, Esc para voltar ou cancelar.
 
 ## Opcionais
 
