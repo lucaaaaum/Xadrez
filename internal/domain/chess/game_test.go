@@ -163,3 +163,28 @@ func TestPromotionToKingRejected(t *testing.T) {
 		t.Fatal("promoção a rei deveria ser recusada")
 	}
 }
+
+func TestLegalMoves(t *testing.T) {
+	var position [8][8]*PlacedPiece
+	position[4][0] = &PlacedPiece{Kind: King, Color: White}
+	position[4][1] = &PlacedPiece{Kind: Rook, Color: White}
+	position[4][7] = &PlacedPiece{Kind: Rook, Color: Black}
+	position[1][0] = &PlacedPiece{Kind: Knight, Color: White}
+
+	rookMoves := LegalMoves(position, 4, 1)
+	if len(rookMoves) != 6 {
+		t.Fatalf("torre cravada deveria ter 6 lances na coluna, teve %v", rookMoves)
+	}
+	for _, move := range rookMoves {
+		if move.X != 4 {
+			t.Fatalf("torre cravada não pode sair da coluna: %v", move)
+		}
+	}
+
+	if moves := LegalMoves(position, 1, 0); len(moves) != 3 {
+		t.Fatalf("cavalo em b1 deveria ter 3 lances, teve %v", moves)
+	}
+	if moves := LegalMoves(position, 0, 0); moves != nil {
+		t.Fatalf("casa vazia não deveria ter lances, teve %v", moves)
+	}
+}
