@@ -2,7 +2,7 @@ package screens
 
 import (
 	"context"
-	"xadrez/cmd/frontend/components"
+	"xadrez/cmd/client/components"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )

@@ -1,7 +1,7 @@
 package screens
 
 import (
-	"xadrez/cmd/frontend/components"
+	"xadrez/cmd/client/components"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/infra/tcp"
 

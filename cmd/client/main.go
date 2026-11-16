@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"xadrez/cmd/frontend/components"
-	"xadrez/cmd/frontend/screens"
+	"xadrez/cmd/client/components"
+	"xadrez/cmd/client/screens"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/infra/tcp"
 

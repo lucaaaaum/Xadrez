@@ -3,7 +3,7 @@ package screens
 import (
 	"context"
 	"strings"
-	"xadrez/cmd/frontend/components"
+	"xadrez/cmd/client/components"
 	"xadrez/internal/application/messages"
 
 	rg "github.com/gen2brain/raylib-go/raygui"
