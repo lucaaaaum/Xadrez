@@ -7,6 +7,8 @@ import (
 	"xadrez/internal/domain/chess"
 	"xadrez/internal/infra/tcp"
 
+	"charm.land/log/v2"
+
 	rg "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -78,6 +80,8 @@ func (s *Session) handleCommonEvent(event components.Event) (components.Screen, 
 			s.invite = &invite
 		}
 		return nil, true
+	case "decline_invite_ok", "room_invite_declined":
+		return nil, true
 	case "join_room_ok", "create_room_ok":
 		if room, ok := event.Payload.(messages.RoomResponse); ok {
 			return NewRoomScreen(s, room), true
@@ -104,6 +108,17 @@ func (s *Session) acceptInvite() error {
 	return s.client.JoinRoom(messages.JoinRoomRequest{Room: room})
 }
 
+func (s *Session) declineInvite() {
+	if s.invite == nil {
+		return
+	}
+	room := s.invite.Room
+	s.invite = nil
+	if err := s.client.DeclineInvite(messages.DeclineInviteRequest{Room: room}); err != nil {
+		log.Warn("falha ao recusar o convite", "sala", room, "erro", err)
+	}
+}
+
 func (s *Session) renderInvite() (accepted bool) {
 	if s.invite == nil {
 		return false
@@ -117,7 +132,7 @@ func (s *Session) renderInvite() (accepted bool) {
 		return true
 	}
 	if rg.Button(rl.Rectangle{X: buttonX + 100 + spacing, Y: bounds.Y + 5, Width: 100, Height: 30}, "Recusar") {
-		s.invite = nil
+		s.declineInvite()
 	}
 	return false
 }
@@ -143,7 +158,7 @@ func (s *Session) renderInvitePanel(x, bottom, width float32) (accepted bool) {
 		accepted = true
 	}
 	if rg.Button(rl.Rectangle{X: x + 2*spacing + buttonWidth, Y: y, Width: buttonWidth, Height: 30}, "Recusar") {
-		s.invite = nil
+		s.declineInvite()
 	}
 	return accepted
 }

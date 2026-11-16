@@ -41,6 +41,8 @@ func main() {
 	forwardTCPMessageAsScreenEvent[messages.RoomResponse](hm, events, "join_room_ok")
 	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "invite_to_room_ok")
 	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "room_invite")
+	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "decline_invite_ok")
+	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "room_invite_declined")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "start_match_ok")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "get_match_ok")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "make_move_ok")

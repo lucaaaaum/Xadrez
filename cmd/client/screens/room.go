@@ -53,6 +53,12 @@ func (s *RoomScreen) HandleEvent(event components.Event) {
 			s.next = s.matchScreen(match)
 			return
 		}
+	case "room_invite_declined":
+		if response, ok := event.Payload.(messages.InviteResponse); ok && response.Room == s.room.Room {
+			s.infoMessage = response.To + " recusou o convite"
+			s.errorMessage = ""
+			return
+		}
 	}
 	if next, ok := s.session.handleCommonEvent(event); ok {
 		if next != nil {
