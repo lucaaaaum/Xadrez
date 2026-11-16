@@ -25,6 +25,16 @@ func NewClient(address string, handlerManager *tcp.HandlerManager, events chan<-
 	return &Client{address: address, handlerManager: handlerManager, events: events}
 }
 
+func (c *Client) SetAddress(address string) {
+	c.mu.Lock()
+	changed := c.address != address
+	c.address = address
+	c.mu.Unlock()
+	if changed {
+		c.Close()
+	}
+}
+
 func (c *Client) Connected() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()

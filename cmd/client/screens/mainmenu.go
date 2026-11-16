@@ -124,6 +124,10 @@ func (m *MainMenuScreen) Render() error {
 		m.submit = true
 	}
 	y += buttonHeight + spacing
+	if rg.Button(rl.Rectangle{X: x, Y: y, Width: buttonWidth, Height: buttonHeight}, "Configurações") && !m.waiting {
+		m.next = NewSettingsScreen(m.session)
+	}
+	y += buttonHeight + spacing
 	if rg.Button(rl.Rectangle{X: x, Y: y, Width: buttonWidth, Height: buttonHeight}, "Sair") {
 		m.exit = true
 	}

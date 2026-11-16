@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"flag"
 	"xadrez/cmd/client/components"
+	"xadrez/cmd/client/config"
 	"xadrez/cmd/client/screens"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/infra/tcp"
@@ -12,13 +14,20 @@ import (
 )
 
 const (
-	serverAddress = "localhost:9000"
-	windowTitle   = "Xadrez"
-	windowWidth   = 800
-	windowHeight  = 600
+	windowTitle  = "Xadrez"
+	windowWidth  = 800
+	windowHeight = 600
 )
 
 func main() {
+	configPath := flag.String("config", config.DefaultPath(), "caminho do arquivo de configuração")
+	flag.Parse()
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Warn("usando a configuração padrão", "erro", err)
+	}
+
 	events := make(chan components.Event, 64)
 
 	hm := tcp.NewHandlerManager()
@@ -36,7 +45,7 @@ func main() {
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "match_updated")
 	forwardTCPMessageAsScreenEvent[tcp.ErrorPayload](hm, events, "error")
 
-	client := screens.NewClient(serverAddress, hm, events)
+	client := screens.NewClient(cfg.ServerAddress, hm, events)
 	defer client.Close()
 
 	rl.InitWindow(windowWidth, windowHeight, windowTitle)
@@ -44,7 +53,7 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
-	session := screens.NewSession(rl.Vector2{X: windowWidth, Y: windowHeight}, client)
+	session := screens.NewSession(rl.Vector2{X: windowWidth, Y: windowHeight}, client, cfg, *configPath)
 	defer session.Close()
 
 	var currentScreen components.Screen = screens.NewMainMenuScreen(session, "")

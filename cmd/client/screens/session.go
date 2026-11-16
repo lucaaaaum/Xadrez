@@ -2,6 +2,7 @@ package screens
 
 import (
 	"xadrez/cmd/client/components"
+	"xadrez/cmd/client/config"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/infra/tcp"
 
@@ -16,15 +17,26 @@ const (
 )
 
 type Session struct {
-	size   rl.Vector2
-	client *Client
-	user   string
-	board  *components.BoardRenderer
-	invite *messages.InviteResponse
+	size       rl.Vector2
+	client     *Client
+	config     config.Config
+	configPath string
+	user       string
+	board      *components.BoardRenderer
+	invite     *messages.InviteResponse
 }
 
-func NewSession(size rl.Vector2, client *Client) *Session {
-	return &Session{size: size, client: client}
+func NewSession(size rl.Vector2, client *Client, cfg config.Config, configPath string) *Session {
+	return &Session{size: size, client: client, config: cfg, configPath: configPath}
+}
+
+func (s *Session) saveConfig(cfg config.Config) error {
+	if err := config.Save(s.configPath, cfg); err != nil {
+		return err
+	}
+	s.config = cfg
+	s.client.SetAddress(cfg.ServerAddress)
+	return nil
 }
 
 func (s *Session) Board() *components.BoardRenderer {
