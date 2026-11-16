@@ -37,7 +37,7 @@
 
 ### Cadastro
 
-- [ ] Cadastro com nome de usuário e senha, separado do login.
+- [x] Cadastro com nome de usuário e senha, feito automaticamente no primeiro login.
 - [x] Nome de usuário único.
 
 ### Autenticação
@@ -70,7 +70,7 @@
 
 - [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
 - [x] Convite entregue ao convidado em tempo real.
-- [ ] Aceitar convite, entrando na sala como participante.
+- [x] Aceitar convite, entrando na sala como participante.
 - [ ] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
 - [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
@@ -116,11 +116,11 @@
 
 ## Cliente
 
-- [ ] Cliente com raylib.
-- [ ] Telas de cadastro e login.
-- [ ] Lista de usuários online e convites.
-- [ ] Tabuleiro jogável.
-- [ ] Tela de resultado.
+- [x] Cliente com raylib.
+- [x] Tela unificada de cadastro e login.
+- [x] Lista de usuários online e convites.
+- [x] Tabuleiro jogável.
+- [x] Tela de resultado.
 
 ## Opcionais
 
