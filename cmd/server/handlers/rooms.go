@@ -96,6 +96,26 @@ func (h *RoomHandler) HandleInviteToRoom(ctx context.Context, request messages.I
 	return response, nil
 }
 
+func (h *RoomHandler) HandleDeclineInvite(ctx context.Context, request messages.DeclineInviteRequest) (messages.InviteResponse, error) {
+	invitee, err := requireUser(ctx)
+	if err != nil {
+		return messages.InviteResponse{}, err
+	}
+	invite, err := h.roomService.DeclineInvite(ctx, request.Room, invitee)
+	if err != nil {
+		return messages.InviteResponse{}, err
+	}
+	response := messages.InviteResponse{
+		Room: invite.RoomName,
+		From: invite.From,
+		To:   invite.To,
+	}
+	if err := h.notifier.SendToUser(invite.From, "room_invite_declined", response); err != nil {
+		log.Warn("falha ao avisar o administrador da recusa", "sala", invite.RoomName, "administrador", invite.From, "erro", err)
+	}
+	return response, nil
+}
+
 func roomResponse(room rooms.Room) messages.RoomResponse {
 	return messages.RoomResponse{
 		Room:         room.Name,

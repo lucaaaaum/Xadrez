@@ -49,6 +49,7 @@ func registerHandlers(handlerManager *tcp.HandlerManager, services Services, not
 	handlerManager.RegisterRequestHandler("join_room", roomHandler.HandleJoinRoom)
 	handlerManager.RegisterRequestHandler("list_rooms", roomHandler.HandleListRooms)
 	handlerManager.RegisterRequestHandler("invite_to_room", roomHandler.HandleInviteToRoom)
+	handlerManager.RegisterRequestHandler("decline_invite", roomHandler.HandleDeclineInvite)
 
 	matchHandler := handlers.NewMatchHandler(services.matchService, services.roomService, notifier)
 	handlerManager.RegisterRequestHandler("start_match", matchHandler.HandleStartMatch)
