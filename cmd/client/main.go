@@ -14,9 +14,11 @@ import (
 )
 
 const (
-	windowTitle  = "Xadrez"
-	windowWidth  = 800
-	windowHeight = 600
+	windowTitle     = "Xadrez"
+	windowWidth     = 800
+	windowHeight    = 600
+	minWindowWidth  = 640
+	minWindowHeight = 600
 )
 
 func main() {
@@ -48,17 +50,21 @@ func main() {
 	client := screens.NewClient(cfg.ServerAddress, hm, events)
 	defer client.Close()
 
+	rl.SetConfigFlags(rl.FlagWindowResizable)
 	rl.InitWindow(windowWidth, windowHeight, windowTitle)
 	defer rl.CloseWindow()
 
+	rl.SetWindowMinSize(minWindowWidth, minWindowHeight)
 	rl.SetTargetFPS(60)
 
-	session := screens.NewSession(rl.Vector2{X: windowWidth, Y: windowHeight}, client, cfg, *configPath)
+	session := screens.NewSession(client, cfg, *configPath)
 	defer session.Close()
 
 	var currentScreen components.Screen = screens.NewMainMenuScreen(session, "")
 
 	for !rl.WindowShouldClose() && currentScreen != nil {
+		session.Resize()
+
 	drainEvents:
 		for {
 			select {

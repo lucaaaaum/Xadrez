@@ -26,8 +26,14 @@ type Session struct {
 	invite     *messages.InviteResponse
 }
 
-func NewSession(size rl.Vector2, client *Client, cfg config.Config, configPath string) *Session {
-	return &Session{size: size, client: client, config: cfg, configPath: configPath}
+func NewSession(client *Client, cfg config.Config, configPath string) *Session {
+	s := &Session{client: client, config: cfg, configPath: configPath}
+	s.Resize()
+	return s
+}
+
+func (s *Session) Resize() {
+	s.size = rl.Vector2{X: float32(rl.GetScreenWidth()), Y: float32(rl.GetScreenHeight())}
 }
 
 func (s *Session) saveConfig(cfg config.Config) error {

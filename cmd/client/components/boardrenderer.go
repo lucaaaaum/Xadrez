@@ -1,6 +1,7 @@
 package components
 
 import (
+	"math"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
 
@@ -24,7 +25,7 @@ type BoardLayout struct {
 }
 
 func (l BoardLayout) tileSize() float32 {
-	return min(l.Bounds.Width, l.Bounds.Height) / 8
+	return float32(math.Floor(float64(min(l.Bounds.Width, l.Bounds.Height) / 8)))
 }
 
 func (l BoardLayout) squarePosition(s Square) rl.Vector2 {

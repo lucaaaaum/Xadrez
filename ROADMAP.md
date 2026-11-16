@@ -123,7 +123,7 @@
 - [x] Tabuleiro jogável.
 - [x] Tela de resultado.
 - [x] Configuração em arquivo TOML (endereço do servidor), editável por uma tela do cliente.
-- [ ] Janela redimensionável, com os elementos ajustados ao novo tamanho (hoje o tamanho é fixo).
+- [x] Janela redimensionável, com os elementos ajustados ao novo tamanho.
 
 ## Opcionais
 
