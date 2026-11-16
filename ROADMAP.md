@@ -101,7 +101,7 @@
 - [ ] Empate por 50 lances, repetição tripla e material insuficiente.
 - [x] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
 - [x] Desistência, com vitória concedida ao oponente.
-- [ ] Vitória por desconexão do oponente.
+- [x] Vitória por desconexão do oponente.
 
 ## Eventos
 

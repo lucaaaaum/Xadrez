@@ -5,6 +5,7 @@ import (
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
 	"xadrez/internal/domain/rooms"
+	"xadrez/internal/infra/tcp"
 
 	"charm.land/log/v2"
 )
@@ -70,6 +71,21 @@ func (h *MatchHandler) HandleResign(ctx context.Context, request messages.Resign
 		return messages.MatchResponse{}, err
 	}
 	return h.respondAndNotify(ctx, player, match), nil
+}
+
+func (h *MatchHandler) HandleDisconnect(ctx context.Context) {
+	player, ok := tcp.UserFrom(ctx)
+	if !ok {
+		return
+	}
+	ctx = context.WithoutCancel(ctx)
+	matches, err := h.matchService.Abandon(ctx, player)
+	if err != nil {
+		log.Error("falha ao encerrar as partidas do usuário desconectado", "usuário", player, "erro", err)
+	}
+	for _, match := range matches {
+		h.respondAndNotify(ctx, player, match)
+	}
 }
 
 func (h *MatchHandler) respondAndNotify(ctx context.Context, author string, match chess.Match) messages.MatchResponse {

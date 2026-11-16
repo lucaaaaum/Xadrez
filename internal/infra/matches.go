@@ -202,6 +202,36 @@ func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fr
 }
 
 func (s *MatchService) Resign(ctx context.Context, roomName, player string) (chess.Match, error) {
+	return s.concede(ctx, roomName, player, chess.OutcomeResignation)
+}
+
+func (s *MatchService) Abandon(ctx context.Context, player string) ([]chess.Match, error) {
+	ongoing, err := s.client.Match.Query().
+		Where(
+			match.FinishedAtIsNil(),
+			match.Or(
+				match.HasWhitePlayerWith(participant.HasUserWith(user.Name(player))),
+				match.HasBlackPlayerWith(participant.HasUserWith(user.Name(player))),
+			),
+		).
+		WithRoom().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("falha ao buscar as partidas em andamento do usuário: %w", err)
+	}
+
+	finished := make([]chess.Match, 0, len(ongoing))
+	for _, record := range ongoing {
+		snapshot, err := s.concede(ctx, record.Edges.Room.Name, player, chess.OutcomeDisconnection)
+		if err != nil {
+			return finished, err
+		}
+		finished = append(finished, snapshot)
+	}
+	return finished, nil
+}
+
+func (s *MatchService) concede(ctx context.Context, roomName, player string, outcome chess.Outcome) (chess.Match, error) {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
 		return chess.Match{}, fmt.Errorf("falha ao iniciar a transação: %w", err)
@@ -217,7 +247,7 @@ func (s *MatchService) Resign(ctx context.Context, roomName, player string) (che
 	}
 
 	snapshot := loaded.snapshot()
-	snapshot.Outcome = chess.OutcomeResignation
+	snapshot.Outcome = outcome
 	snapshot.Winner = loaded.playerOf(color.Opponent())
 	if err := finishMatch(ctx, tx, loaded.record, snapshot); err != nil {
 		return chess.Match{}, rollback(tx, err)
@@ -247,6 +277,8 @@ func finishMatch(ctx context.Context, tx *ent.Tx, record *ent.Match, snapshot ch
 		update.SetTermination(match.TerminationStalemate)
 	case chess.OutcomeResignation:
 		update.SetTermination(match.TerminationResignation)
+	case chess.OutcomeDisconnection:
+		update.SetTermination(match.TerminationDisconnection)
 	}
 	if _, err := update.Save(ctx); err != nil {
 		return fmt.Errorf("falha ao encerrar a partida: %w", err)

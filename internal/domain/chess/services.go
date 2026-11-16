@@ -5,10 +5,11 @@ import "context"
 type Outcome string
 
 const (
-	OutcomeNone        Outcome = ""
-	OutcomeCheckmate   Outcome = "checkmate"
-	OutcomeStalemate   Outcome = "stalemate"
-	OutcomeResignation Outcome = "resignation"
+	OutcomeNone          Outcome = ""
+	OutcomeCheckmate     Outcome = "checkmate"
+	OutcomeStalemate     Outcome = "stalemate"
+	OutcomeResignation   Outcome = "resignation"
+	OutcomeDisconnection Outcome = "disconnection"
 )
 
 type Match struct {
@@ -27,4 +28,5 @@ type MatchService interface {
 	GetMatch(ctx context.Context, room string) (Match, error)
 	MakeMove(ctx context.Context, room, player string, fromX, fromY, toX, toY int, promotion PieceKind) (Match, error)
 	Resign(ctx context.Context, room, player string) (Match, error)
+	Abandon(ctx context.Context, player string) ([]Match, error)
 }

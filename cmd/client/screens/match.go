@@ -474,6 +474,8 @@ func (s *MatchScreen) outcomeText() string {
 		return "Afogamento. Empate."
 	case chess.OutcomeResignation:
 		return fmt.Sprintf("Desistência. Vencedor: %s", s.match.Winner)
+	case chess.OutcomeDisconnection:
+		return fmt.Sprintf("Oponente desconectado. Vencedor: %s", s.match.Winner)
 	}
 	return string(s.match.Outcome)
 }

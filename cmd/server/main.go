@@ -56,6 +56,7 @@ func registerHandlers(handlerManager *tcp.HandlerManager, services Services, not
 	handlerManager.RegisterRequestHandler("get_match", matchHandler.HandleGetMatch)
 	handlerManager.RegisterRequestHandler("make_move", matchHandler.HandleMakeMove)
 	handlerManager.RegisterRequestHandler("resign", matchHandler.HandleResign)
+	handlerManager.RegisterDisconnectHandler(matchHandler.HandleDisconnect)
 
 }
 
