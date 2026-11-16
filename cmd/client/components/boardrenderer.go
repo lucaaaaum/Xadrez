@@ -2,6 +2,7 @@ package components
 
 import (
 	"math"
+	"strconv"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
 
@@ -139,6 +140,8 @@ func (b *BoardRenderer) Render(view BoardView) {
 		}
 	}
 
+	b.renderCoordinates(view.Layout, tile)
+
 	for _, s := range view.Moves {
 		center := rl.Vector2Add(view.Layout.squarePosition(s), rl.Vector2{X: tile / 2, Y: tile / 2})
 		if view.Pieces[s.X][s.Y] != nil {
@@ -147,6 +150,33 @@ func (b *BoardRenderer) Render(view BoardView) {
 			rl.DrawCircleV(center, tile*0.16, moveDot)
 		}
 	}
+}
+
+func (b *BoardRenderer) renderCoordinates(layout BoardLayout, tile float32) {
+	size := max(int32(tile*0.2), 10)
+	padding := tile * 0.05
+	for i := range 8 {
+		file, rank := Square{X: i, Y: 0}, Square{X: 0, Y: i}
+		if layout.Flipped {
+			file.Y, rank.X = 7, 7
+		}
+
+		letter := string(rune('a' + i))
+		position := layout.squarePosition(file)
+		x := int32(position.X+tile-padding) - rl.MeasureText(letter, size)
+		y := int32(position.Y+tile-padding) - size
+		rl.DrawText(letter, x, y, size, coordinateColor(file))
+
+		position = layout.squarePosition(rank)
+		rl.DrawText(strconv.Itoa(i+1), int32(position.X+padding), int32(position.Y+padding), size, coordinateColor(rank))
+	}
+}
+
+func coordinateColor(s Square) rl.Color {
+	if (s.X+s.Y)%2 == 0 {
+		return lightTile
+	}
+	return darkTile
 }
 
 func (b *BoardRenderer) renderPiece(piece messages.Piece, position rl.Vector2, tile float32) {
