@@ -140,6 +140,19 @@ func (s *RoomService) InviteToRoom(ctx context.Context, name, admin, invitee str
 	return invite, nil
 }
 
+func (s *RoomService) DeclineInvite(ctx context.Context, name, invitee string) (rooms.Invite, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	invite, exists := s.invites[name][invitee]
+	if !exists {
+		return rooms.Invite{}, domain.NewError("não há convite pendente para a sala %s", name)
+	}
+	delete(s.invites[name], invitee)
+
+	log.Info("convite recusado", "sala", name, "administrador", invite.From, "convidado", invitee)
+	return invite, nil
+}
+
 func (s *RoomService) roomQuery() *ent.GameRoomQuery {
 	return s.client.GameRoom.Query().
 		WithAdmin().
