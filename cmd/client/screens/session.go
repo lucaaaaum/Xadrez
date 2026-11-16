@@ -95,6 +95,32 @@ func (s *Session) renderInvite() (accepted bool) {
 	return false
 }
 
+func (s *Session) renderInvitePanel(x, bottom, width float32) (accepted bool) {
+	if s.invite == nil {
+		return false
+	}
+	lines := wrapText(s.invite.From+" te convidou para a sala "+s.invite.Room, textSize, int32(width-2*spacing))
+	height := float32(len(lines))*float32(lineHeight) + 30 + 3*spacing
+	bounds := rl.Rectangle{X: x, Y: bottom - height, Width: width, Height: height}
+	rl.DrawRectangleRec(bounds, rl.NewColor(230, 230, 250, 255))
+
+	y := bounds.Y + spacing
+	for _, line := range lines {
+		rl.DrawText(line, int32(x+spacing), int32(y), textSize, rl.DarkBlue)
+		y += float32(lineHeight)
+	}
+	y += spacing
+
+	buttonWidth := (width - 3*spacing) / 2
+	if rg.Button(rl.Rectangle{X: x + spacing, Y: y, Width: buttonWidth, Height: 30}, "Aceitar") {
+		accepted = true
+	}
+	if rg.Button(rl.Rectangle{X: x + 2*spacing + buttonWidth, Y: y, Width: buttonWidth, Height: 30}, "Recusar") {
+		s.invite = nil
+	}
+	return accepted
+}
+
 func errorMessage(event components.Event) (string, bool) {
 	if event.Type != tcp.ErrorMessageType {
 		return "", false

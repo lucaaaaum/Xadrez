@@ -75,10 +75,7 @@ func (s *RoomScreen) HandleEvent(event components.Event) {
 }
 
 func (s *RoomScreen) matchScreen(match messages.MatchResponse) *MatchScreen {
-	room := s.room
-	return NewMatchScreen(s.session.size, s.session.user, match, s.session.client, s.session.Board(), func() components.Screen {
-		return NewRoomScreen(s.session, room)
-	})
+	return NewMatchScreen(s.session, s.room, match)
 }
 
 func (s *RoomScreen) Update(ctx context.Context) (components.Screen, error) {

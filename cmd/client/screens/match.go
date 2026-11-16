@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"xadrez/cmd/client/components"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
@@ -13,18 +12,6 @@ import (
 	rg "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
-
-type MatchClient interface {
-	MakeMove(request messages.MoveRequest) error
-	Resign(request messages.ResignRequest) error
-}
-
-type matchInbox struct {
-	mu     sync.Mutex
-	match  *messages.MatchResponse
-	room   *messages.RoomResponse
-	errors []string
-}
 
 type matchAction int
 
@@ -36,6 +23,7 @@ const (
 	actionLeave
 	actionPromote
 	actionCancelPromotion
+	actionAcceptInvite
 )
 
 const (
@@ -43,6 +31,9 @@ const (
 	sidebarWidth float32 = 200
 	lineHeight   int32   = 22
 	textSize     int32   = 18
+
+	sidebarButtonHeight float32 = 40
+	sidebarButtonStep   float32 = 50
 )
 
 var promotionChoices = []struct {
@@ -56,13 +47,9 @@ var promotionChoices = []struct {
 }
 
 type MatchScreen struct {
-	size   rl.Vector2
-	user   string
-	client MatchClient
-	board  *components.BoardRenderer
-	back   func() components.Screen
-	next   components.Screen
-	inbox  matchInbox
+	session *Session
+	room    messages.RoomResponse
+	next    components.Screen
 
 	match         messages.MatchResponse
 	spectators    []string
@@ -72,93 +59,78 @@ type MatchScreen struct {
 	confirmResign bool
 	errorMessage  string
 
+	refreshRoom   bool
 	action        matchAction
 	promotionKind chess.PieceKind
 }
 
-func NewMatchScreen(size rl.Vector2, user string, match messages.MatchResponse, client MatchClient, board *components.BoardRenderer, back func() components.Screen) *MatchScreen {
+func NewMatchScreen(session *Session, room messages.RoomResponse, match messages.MatchResponse) *MatchScreen {
 	s := &MatchScreen{
-		size:   size,
-		user:   user,
-		client: client,
-		board:  board,
-		back:   back,
-		match:  match,
+		session:     session,
+		room:        room,
+		match:       match,
+		refreshRoom: true,
 	}
 	s.next = s
+	s.updateSpectators()
 	return s
-}
-
-func (s *MatchScreen) PushMatch(match messages.MatchResponse) {
-	s.inbox.mu.Lock()
-	defer s.inbox.mu.Unlock()
-	s.inbox.match = &match
-}
-
-func (s *MatchScreen) PushRoom(room messages.RoomResponse) {
-	s.inbox.mu.Lock()
-	defer s.inbox.mu.Unlock()
-	s.inbox.room = &room
-}
-
-func (s *MatchScreen) PushError(message string) {
-	s.inbox.mu.Lock()
-	defer s.inbox.mu.Unlock()
-	s.inbox.errors = append(s.inbox.errors, message)
 }
 
 func (s *MatchScreen) HandleEvent(event components.Event) {
 	if message, ok := errorMessage(event); ok {
-		s.PushError(message)
+		s.errorMessage = message
+		s.waiting = false
 		return
 	}
 	switch event.Type {
-	case "match_updated", "make_move_ok", "resign_ok", "get_match_ok":
+	case "match_updated", "make_move_ok", "resign_ok", "get_match_ok", "start_match_ok":
 		if match, ok := event.Payload.(messages.MatchResponse); ok && match.Room == s.match.Room {
-			s.PushMatch(match)
+			s.applyMatch(match)
 		}
+		return
 	case "list_rooms_ok":
 		if response, ok := event.Payload.(messages.ListRoomsResponse); ok {
 			for _, room := range response.Rooms {
-				if room.Room == s.match.Room {
-					s.PushRoom(room)
+				if room.Room == s.room.Room {
+					s.room = room
+					s.updateSpectators()
 				}
 			}
 		}
+		return
 	}
+	if next, ok := s.session.handleCommonEvent(event); ok && next != nil {
+		s.next = next
+	}
+}
+
+func (s *MatchScreen) applyMatch(match messages.MatchResponse) {
+	s.match = match
+	s.waiting = false
+	s.deselect()
+	s.promotion = nil
+	if s.finished() {
+		s.confirmResign = false
+	}
+	s.updateSpectators()
+}
+
+func (s *MatchScreen) updateSpectators() {
+	s.spectators = slices.DeleteFunc(slices.Clone(s.room.Participants), func(name string) bool {
+		return name == s.match.White || name == s.match.Black
+	})
 }
 
 func (s *MatchScreen) Update(ctx context.Context) (components.Screen, error) {
-	s.drainInbox()
+	if s.refreshRoom {
+		s.refreshRoom = false
+		if err := s.session.client.ListRooms(); err != nil {
+			s.errorMessage = err.Error()
+		}
+	}
 	s.handleAction()
 	s.handleBoardClick()
 	return s.next, nil
-}
-
-func (s *MatchScreen) drainInbox() {
-	s.inbox.mu.Lock()
-	match, room, errors := s.inbox.match, s.inbox.room, s.inbox.errors
-	s.inbox.match, s.inbox.room, s.inbox.errors = nil, nil, nil
-	s.inbox.mu.Unlock()
-
-	if match != nil {
-		s.match = *match
-		s.waiting = false
-		s.selected = nil
-		s.promotion = nil
-		if s.finished() {
-			s.confirmResign = false
-		}
-	}
-	if room != nil {
-		s.spectators = slices.DeleteFunc(slices.Clone(room.Participants), func(name string) bool {
-			return name == s.match.White || name == s.match.Black
-		})
-	}
-	if len(errors) > 0 {
-		s.errorMessage = errors[len(errors)-1]
-		s.waiting = false
-	}
 }
 
 func (s *MatchScreen) handleAction() {
@@ -172,13 +144,13 @@ func (s *MatchScreen) handleAction() {
 		s.confirmResign = false
 	case actionConfirmResign:
 		s.confirmResign = false
-		s.selected = nil
+		s.deselect()
 		s.promotion = nil
 		s.send(func() error {
-			return s.client.Resign(messages.ResignRequest{Room: s.match.Room})
+			return s.session.client.Resign(messages.ResignRequest{Room: s.match.Room})
 		})
 	case actionLeave:
-		s.next = s.back()
+		s.next = NewRoomScreen(s.session, s.room)
 	case actionPromote:
 		if s.promotion != nil {
 			request := *s.promotion
@@ -188,6 +160,10 @@ func (s *MatchScreen) handleAction() {
 		}
 	case actionCancelPromotion:
 		s.promotion = nil
+	case actionAcceptInvite:
+		if err := s.session.acceptInvite(); err != nil {
+			s.errorMessage = err.Error()
+		}
 	}
 }
 
@@ -204,9 +180,9 @@ func (s *MatchScreen) handleBoardClick() {
 	piece := s.match.Pieces[square.X][square.Y]
 	if piece != nil && piece.Color == color {
 		if s.selected != nil && *s.selected == square {
-			s.selected = nil
+			s.deselect()
 		} else {
-			s.selected = &square
+			s.selectSquare(square)
 		}
 		return
 	}
@@ -221,7 +197,7 @@ func (s *MatchScreen) handleBoardClick() {
 		ToX:   square.X,
 		ToY:   square.Y,
 	}
-	s.selected = nil
+	s.deselect()
 	if s.isPromotion(request) {
 		s.promotion = &request
 		return
@@ -229,9 +205,17 @@ func (s *MatchScreen) handleBoardClick() {
 	s.sendMove(request)
 }
 
+func (s *MatchScreen) selectSquare(square components.Square) {
+	s.selected = &square
+}
+
+func (s *MatchScreen) deselect() {
+	s.selected = nil
+}
+
 func (s *MatchScreen) sendMove(request messages.MoveRequest) {
 	s.send(func() error {
-		return s.client.MakeMove(request)
+		return s.session.client.MakeMove(request)
 	})
 }
 
@@ -245,7 +229,7 @@ func (s *MatchScreen) send(request func() error) {
 }
 
 func (s *MatchScreen) color() (chess.PieceColor, bool) {
-	switch s.user {
+	switch s.session.user {
 	case s.match.White:
 		return chess.White, true
 	case s.match.Black:
@@ -258,9 +242,18 @@ func (s *MatchScreen) finished() bool {
 	return s.match.Outcome != chess.OutcomeNone
 }
 
+func (s *MatchScreen) playing() bool {
+	_, isPlayer := s.color()
+	return isPlayer && !s.finished()
+}
+
 func (s *MatchScreen) canMove() bool {
+	return s.playing() && !s.waiting && s.isMyTurn()
+}
+
+func (s *MatchScreen) isMyTurn() bool {
 	color, isPlayer := s.color()
-	return isPlayer && !s.finished() && !s.waiting && s.match.Turn == color
+	return isPlayer && s.match.Turn == color
 }
 
 func (s *MatchScreen) isPromotion(request messages.MoveRequest) bool {
@@ -286,7 +279,8 @@ func (s *MatchScreen) checkSquare() *components.Square {
 }
 
 func (s *MatchScreen) layout() components.BoardLayout {
-	side := min(s.size.Y-2*margin, s.size.X-3*margin-sidebarWidth)
+	size := s.session.size
+	side := min(size.Y-2*margin, size.X-3*margin-sidebarWidth)
 	color, _ := s.color()
 	return components.BoardLayout{
 		Bounds:  rl.Rectangle{X: margin, Y: margin, Width: side, Height: side},
@@ -296,7 +290,7 @@ func (s *MatchScreen) layout() components.BoardLayout {
 
 func (s *MatchScreen) Render() error {
 	layout := s.layout()
-	s.board.Render(components.BoardView{
+	s.session.Board().Render(components.BoardView{
 		Layout:   layout,
 		Pieces:   s.match.Pieces,
 		Selected: s.selected,
@@ -330,7 +324,7 @@ func (s *MatchScreen) renderSidebar(x float32) {
 		line(s.outcomeText(), rl.DarkBlue)
 	} else {
 		turn := "Vez das " + s.match.Turn.String()
-		if s.canMove() || (s.waiting && s.isMyTurn()) {
+		if s.isMyTurn() {
 			turn += " (sua)"
 		}
 		line(turn, rl.DarkGray)
@@ -354,29 +348,35 @@ func (s *MatchScreen) renderSidebar(x float32) {
 	}
 
 	s.renderButtons(x)
+
+	if !s.playing() {
+		bottom := s.session.size.Y - margin - sidebarButtonStep - spacing
+		if s.session.renderInvitePanel(x, bottom, sidebarWidth) {
+			s.action = actionAcceptInvite
+		}
+	}
 }
 
 func (s *MatchScreen) renderButtons(x float32) {
 	button := func(row int, text string) bool {
 		bounds := rl.Rectangle{
 			X:      x,
-			Y:      s.size.Y - margin - float32(row+1)*50,
+			Y:      s.session.size.Y - margin - float32(row)*sidebarButtonStep - sidebarButtonHeight,
 			Width:  sidebarWidth,
-			Height: 40,
+			Height: sidebarButtonHeight,
 		}
 		return rg.Button(bounds, text)
 	}
 
-	_, isPlayer := s.color()
 	switch {
-	case isPlayer && !s.finished() && s.confirmResign:
+	case s.playing() && s.confirmResign:
 		if button(1, "Confirmar desistência") {
 			s.action = actionConfirmResign
 		}
 		if button(0, "Cancelar") {
 			s.action = actionCancelResign
 		}
-	case isPlayer && !s.finished():
+	case s.playing():
 		if button(0, "Desistir") && !s.waiting {
 			s.action = actionResign
 		}
@@ -410,13 +410,8 @@ func (s *MatchScreen) renderPromotion(board rl.Rectangle) {
 	}
 }
 
-func (s *MatchScreen) isMyTurn() bool {
-	color, isPlayer := s.color()
-	return isPlayer && s.match.Turn == color
-}
-
 func (s *MatchScreen) playerLabel(name string) string {
-	if name == s.user {
+	if name == s.session.user {
 		return name + " (você)"
 	}
 	return name
