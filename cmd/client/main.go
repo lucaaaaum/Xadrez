@@ -19,6 +19,7 @@ const (
 	windowHeight    = 600
 	minWindowWidth  = 640
 	minWindowHeight = 600
+	eventBufferSize = 256
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		log.Warn("usando a configuração padrão", "erro", err)
 	}
 
-	events := make(chan components.Event, 64)
+	events := make(chan components.Event, eventBufferSize)
 
 	hm := tcp.NewHandlerManager()
 	forwardTCPMessageAsScreenEvent[messages.LoginResponse](hm, events, "login_ok")
@@ -107,10 +108,10 @@ func main() {
 
 func forwardTCPMessageAsScreenEvent[T any](hm *tcp.HandlerManager, events chan components.Event, messageType string) {
 	hm.RegisterHandler(messageType, func(ctx context.Context, message tcp.Message[T]) error {
-		events <- components.Event{
-			Id:      message.Id,
-			Type:    messageType,
-			Payload: message.Payload,
+		select {
+		case events <- components.Event{Id: message.Id, Type: messageType, Payload: message.Payload}:
+		default:
+			log.Warn("fila de eventos cheia, mensagem descartada", "tipo", messageType, "id", message.Id)
 		}
 		return nil
 	})
