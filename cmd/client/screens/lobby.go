@@ -27,7 +27,7 @@ func NewLobbyScreen(session *Session) *LobbyScreen {
 		l.next = NewRoomsScreen(session)
 	})
 	l.buttons.AddNewButton("Sair", func() {
-		l.next = nil
+		l.next = NewMainMenuScreen(session, "")
 	})
 	return l
 }

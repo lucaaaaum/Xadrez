@@ -11,9 +11,8 @@ import (
 )
 
 type MainMenuScreen struct {
-	size   rl.Vector2
-	client *Client
-	next   components.Screen
+	session *Session
+	next    components.Screen
 
 	name            string
 	password        string
@@ -27,11 +26,12 @@ type MainMenuScreen struct {
 	exit   bool
 }
 
-func NewMainMenuScreen(size rl.Vector2, client *Client) *MainMenuScreen {
+func NewMainMenuScreen(session *Session, errorMessage string) *MainMenuScreen {
+	session.logout()
 	m := &MainMenuScreen{
-		size:        size,
-		client:      client,
-		editingName: true,
+		session:      session,
+		editingName:  true,
+		errorMessage: errorMessage,
 	}
 	m.next = m
 	return m
@@ -45,8 +45,8 @@ func (m *MainMenuScreen) HandleEvent(event components.Event) {
 	}
 	switch event.Type {
 	case "login_ok":
-		session := &Session{size: m.size, client: m.client, user: m.pendingName}
-		m.next = NewLobbyScreen(session)
+		m.session.start(m.pendingName)
+		m.next = NewLobbyScreen(m.session)
 	}
 }
 
@@ -78,7 +78,11 @@ func (m *MainMenuScreen) login() {
 		return
 	}
 	m.errorMessage = ""
-	if err := m.client.Login(messages.LoginRequest{Name: name, Password: m.password}); err != nil {
+	if err := m.session.client.Connect(); err != nil {
+		m.errorMessage = "não foi possível conectar ao servidor"
+		return
+	}
+	if err := m.session.client.Login(messages.LoginRequest{Name: name, Password: m.password}); err != nil {
 		m.errorMessage = err.Error()
 		return
 	}
@@ -89,8 +93,8 @@ func (m *MainMenuScreen) login() {
 func (m *MainMenuScreen) Render() error {
 	drawTitle("Xadrez")
 
-	x := (m.size.X - buttonWidth) / 2
-	y := m.size.Y/2 - 2*(buttonHeight+spacing)
+	x := (m.session.size.X - buttonWidth) / 2
+	y := m.session.size.Y/2 - 2*(buttonHeight+spacing)
 
 	rl.DrawText("Usuário", int32(x), int32(y-20), textSize, rl.DarkGray)
 	if rg.TextBox(rl.Rectangle{X: x, Y: y, Width: buttonWidth, Height: buttonHeight}, &m.name, 32, m.editingName) {

@@ -1,64 +1,121 @@
 package screens
 
 import (
+	"errors"
+	"sync"
+	"xadrez/cmd/client/components"
 	"xadrez/internal/application/messages"
 	"xadrez/internal/infra/tcp"
 )
 
+const DisconnectedEvent = "disconnected"
+
+var ErrNotConnected = errors.New("sem conexão com o servidor")
+
 type Client struct {
+	address        string
+	handlerManager *tcp.HandlerManager
+	events         chan<- components.Event
+
+	mu  sync.Mutex
 	tcp *tcp.TCPClient
 }
 
-func NewClient(tcpClient *tcp.TCPClient) *Client {
-	return &Client{tcp: tcpClient}
+func NewClient(address string, handlerManager *tcp.HandlerManager, events chan<- components.Event) *Client {
+	return &Client{address: address, handlerManager: handlerManager, events: events}
+}
+
+func (c *Client) Connected() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.tcp != nil
+}
+
+func (c *Client) Connect() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.tcp != nil {
+		return nil
+	}
+	tcpClient, err := tcp.Dial(c.address, c.handlerManager)
+	if err != nil {
+		return err
+	}
+	c.tcp = tcpClient
+	go c.watch(tcpClient)
+	return nil
+}
+
+func (c *Client) watch(tcpClient *tcp.TCPClient) {
+	<-tcpClient.Done()
+	c.mu.Lock()
+	lost := c.tcp == tcpClient
+	if lost {
+		c.tcp = nil
+	}
+	c.mu.Unlock()
+	if lost {
+		c.events <- components.Event{Type: DisconnectedEvent}
+	}
+}
+
+func (c *Client) Close() {
+	c.mu.Lock()
+	tcpClient := c.tcp
+	c.tcp = nil
+	c.mu.Unlock()
+	if tcpClient != nil {
+		tcpClient.Close()
+	}
+}
+
+func send[T any](c *Client, messageType string, payload T) error {
+	c.mu.Lock()
+	tcpClient := c.tcp
+	c.mu.Unlock()
+	if tcpClient == nil {
+		return ErrNotConnected
+	}
+	_, err := tcpClient.SendRequest(messageType, payload)
+	return err
 }
 
 func (c *Client) Login(request messages.LoginRequest) error {
-	_, err := c.tcp.SendRequest("login", request)
-	return err
+	return send(c, "login", request)
 }
 
 func (c *Client) ListOnlineUsers() error {
-	_, err := c.tcp.SendRequest("list_online_users", messages.ListOnlineUsersRequest{})
-	return err
+	return send(c, "list_online_users", messages.ListOnlineUsersRequest{})
 }
 
 func (c *Client) ListRooms() error {
-	_, err := c.tcp.SendRequest("list_rooms", messages.ListRoomsRequest{})
-	return err
+	return send(c, "list_rooms", messages.ListRoomsRequest{})
 }
 
 func (c *Client) CreateRoom(request messages.CreateRoomRequest) error {
-	_, err := c.tcp.SendRequest("create_room", request)
-	return err
+	return send(c, "create_room", request)
 }
 
 func (c *Client) JoinRoom(request messages.JoinRoomRequest) error {
-	_, err := c.tcp.SendRequest("join_room", request)
-	return err
+	return send(c, "join_room", request)
 }
 
 func (c *Client) InviteToRoom(request messages.InviteToRoomRequest) error {
-	_, err := c.tcp.SendRequest("invite_to_room", request)
-	return err
+	return send(c, "invite_to_room", request)
 }
 
 func (c *Client) StartMatch(request messages.StartMatchRequest) error {
-	_, err := c.tcp.SendRequest("start_match", request)
-	return err
+	return send(c, "start_match", request)
 }
 
 func (c *Client) GetMatch(request messages.GetMatchRequest) error {
-	_, err := c.tcp.SendRequest("get_match", request)
-	return err
+	return send(c, "get_match", request)
 }
 
 func (c *Client) MakeMove(request messages.MoveRequest) error {
-	_, err := c.tcp.SendRequest("make_move", request)
-	return err
+	return send(c, "make_move", request)
 }
 
 func (c *Client) Resign(request messages.ResignRequest) error {
-	_, err := c.tcp.SendRequest("resign", request)
-	return err
+	return send(c, "resign", request)
 }

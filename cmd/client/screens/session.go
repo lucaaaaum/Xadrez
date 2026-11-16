@@ -23,11 +23,33 @@ type Session struct {
 	invite *messages.InviteResponse
 }
 
+func NewSession(size rl.Vector2, client *Client) *Session {
+	return &Session{size: size, client: client}
+}
+
 func (s *Session) Board() *components.BoardRenderer {
 	if s.board == nil {
 		s.board = components.NewBoardRenderer()
 	}
 	return s.board
+}
+
+func (s *Session) start(user string) {
+	s.user = user
+	s.invite = nil
+}
+
+func (s *Session) logout() {
+	s.client.Close()
+	s.user = ""
+	s.invite = nil
+}
+
+func (s *Session) Close() {
+	if s.board != nil {
+		s.board.Unload()
+		s.board = nil
+	}
 }
 
 func (s *Session) handleCommonEvent(event components.Event) (components.Screen, bool) {
