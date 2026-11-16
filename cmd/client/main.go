@@ -57,6 +57,7 @@ func main() {
 
 	rl.SetWindowMinSize(minWindowWidth, minWindowHeight)
 	rl.SetTargetFPS(60)
+	rl.SetExitKey(rl.KeyNull)
 
 	session := screens.NewSession(client, cfg, *configPath)
 	defer session.Close()

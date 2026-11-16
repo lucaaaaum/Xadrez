@@ -82,6 +82,12 @@ func (s *RoomScreen) matchScreen(match messages.MatchResponse) *MatchScreen {
 }
 
 func (s *RoomScreen) Update(ctx context.Context) (components.Screen, error) {
+	if rl.IsKeyPressed(rl.KeyEnter) && s.editingInvite {
+		s.invite = true
+	}
+	if rl.IsKeyPressed(rl.KeyEscape) {
+		s.back = true
+	}
 	var err error
 	switch {
 	case s.refresh:

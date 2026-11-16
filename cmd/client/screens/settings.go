@@ -40,6 +40,9 @@ func (s *SettingsScreen) Update(ctx context.Context) (components.Screen, error) 
 	if rl.IsKeyPressed(rl.KeyEnter) {
 		s.save = true
 	}
+	if rl.IsKeyPressed(rl.KeyEscape) {
+		s.back = true
+	}
 	if s.save {
 		s.save = false
 		cfg := s.session.config

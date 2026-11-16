@@ -57,6 +57,16 @@ func (s *RoomsScreen) HandleEvent(event components.Event) {
 }
 
 func (s *RoomsScreen) Update(ctx context.Context) (components.Screen, error) {
+	if rl.IsKeyPressed(rl.KeyEnter) {
+		if s.editingRoom {
+			s.create = true
+		} else if s.active >= 0 {
+			s.join = true
+		}
+	}
+	if rl.IsKeyPressed(rl.KeyEscape) {
+		s.back = true
+	}
 	var err error
 	switch {
 	case s.refresh:

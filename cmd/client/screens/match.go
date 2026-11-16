@@ -140,9 +140,26 @@ func (s *MatchScreen) Update(ctx context.Context) (components.Screen, error) {
 			s.errorMessage = err.Error()
 		}
 	}
+	s.handleKeys()
 	s.handleAction()
 	s.handleBoardClick()
 	return s.next, nil
+}
+
+func (s *MatchScreen) handleKeys() {
+	if !rl.IsKeyPressed(rl.KeyEscape) {
+		return
+	}
+	switch {
+	case s.promotion != nil:
+		s.action = actionCancelPromotion
+	case s.confirmResign:
+		s.action = actionCancelResign
+	case s.selected != nil:
+		s.deselect()
+	case !s.playing():
+		s.action = actionLeave
+	}
 }
 
 func (s *MatchScreen) handleAction() {

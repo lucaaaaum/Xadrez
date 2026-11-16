@@ -49,6 +49,9 @@ func (s *OnlineUsersScreen) HandleEvent(event components.Event) {
 }
 
 func (s *OnlineUsersScreen) Update(ctx context.Context) (components.Screen, error) {
+	if rl.IsKeyPressed(rl.KeyEscape) {
+		s.back = true
+	}
 	if s.refresh {
 		s.refresh = false
 		if err := s.session.client.ListOnlineUsers(); err != nil {
