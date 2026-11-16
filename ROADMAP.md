@@ -72,7 +72,7 @@
 - [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
 - [x] Convite entregue ao convidado em tempo real.
 - [x] Aceitar convite, entrando na sala como participante.
-- [ ] Recusar convite, com aviso ao administrador.
+- [x] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
 - [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
 - [ ] Listagem dos convites pendentes do usuário.
