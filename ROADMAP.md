@@ -6,6 +6,7 @@
 
 - [x] Servidor TCP que aceita várias conexões simultâneas.
 - [x] Porta lida da configuração.
+- [ ] Configuração em arquivo TOML (endereço, banco), hoje lida de variáveis de ambiente.
 - [x] Sessão por conexão, associando a conexão ao usuário autenticado.
 - [x] Detecção de desconexão, com o usuário removido da lista de online.
 - [ ] Graceful shutdown.
@@ -121,6 +122,8 @@
 - [x] Lista de usuários online e convites.
 - [x] Tabuleiro jogável.
 - [x] Tela de resultado.
+- [ ] Configuração em arquivo TOML (endereço do servidor), editável por uma tela do cliente.
+- [ ] Janela redimensionável, com os elementos ajustados ao novo tamanho (hoje o tamanho é fixo).
 
 ## Opcionais
 
