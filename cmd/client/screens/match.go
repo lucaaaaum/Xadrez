@@ -89,8 +89,11 @@ func (s *MatchScreen) HandleEvent(event components.Event) {
 	case "match_updated", "make_move_ok", "resign_ok", "get_match_ok", "start_match_ok":
 		if match, ok := event.Payload.(messages.MatchResponse); ok && match.Room == s.match.Room {
 			s.applyMatch(match)
+			return
 		}
-		return
+		if s.playing() {
+			return
+		}
 	case "list_rooms_ok":
 		if response, ok := event.Payload.(messages.ListRoomsResponse); ok {
 			for _, room := range response.Rooms {

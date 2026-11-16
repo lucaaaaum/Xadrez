@@ -4,6 +4,7 @@ import (
 	"xadrez/cmd/client/components"
 	"xadrez/cmd/client/config"
 	"xadrez/internal/application/messages"
+	"xadrez/internal/domain/chess"
 	"xadrez/internal/infra/tcp"
 
 	rg "github.com/gen2brain/raylib-go/raygui"
@@ -82,8 +83,16 @@ func (s *Session) handleCommonEvent(event components.Event) (components.Screen, 
 			return NewRoomScreen(s, room), true
 		}
 		return nil, true
+	case "match_updated":
+		if match, ok := event.Payload.(messages.MatchResponse); ok && s.isPlaying(match) {
+			return NewMatchScreen(s, messages.RoomResponse{Room: match.Room}, match), true
+		}
 	}
 	return nil, false
+}
+
+func (s *Session) isPlaying(match messages.MatchResponse) bool {
+	return match.Outcome == chess.OutcomeNone && (match.White == s.user || match.Black == s.user)
 }
 
 func (s *Session) acceptInvite() error {

@@ -47,6 +47,13 @@ func (s *RoomScreen) HandleEvent(event components.Event) {
 		s.infoMessage = ""
 		return
 	}
+	switch event.Type {
+	case "start_match_ok", "get_match_ok", "match_updated":
+		if match, ok := event.Payload.(messages.MatchResponse); ok && match.Room == s.room.Room {
+			s.next = s.matchScreen(match)
+			return
+		}
+	}
 	if next, ok := s.session.handleCommonEvent(event); ok {
 		if next != nil {
 			s.next = next
@@ -66,10 +73,6 @@ func (s *RoomScreen) HandleEvent(event components.Event) {
 		if response, ok := event.Payload.(messages.InviteResponse); ok {
 			s.infoMessage = "convite enviado para " + response.To
 			s.errorMessage = ""
-		}
-	case "start_match_ok", "get_match_ok", "match_updated":
-		if match, ok := event.Payload.(messages.MatchResponse); ok && match.Room == s.room.Room {
-			s.next = s.matchScreen(match)
 		}
 	}
 }
