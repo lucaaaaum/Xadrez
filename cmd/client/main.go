@@ -61,6 +61,12 @@ func main() {
 	defer session.Close()
 
 	var currentScreen components.Screen = screens.NewMainMenuScreen(session, "")
+	switchTo := func(next components.Screen) {
+		if next != currentScreen {
+			client.NextGeneration()
+		}
+		currentScreen = next
+	}
 
 	for !rl.WindowShouldClose() && currentScreen != nil {
 		session.Resize()
@@ -71,7 +77,11 @@ func main() {
 			case event := <-events:
 				if event.Type == screens.DisconnectedEvent {
 					log.Warn("conexão com o servidor perdida")
-					currentScreen = screens.NewMainMenuScreen(session, "conexão com o servidor perdida")
+					switchTo(screens.NewMainMenuScreen(session, "conexão com o servidor perdida"))
+					continue
+				}
+				if client.Settle(event) && event.Type == tcp.ErrorMessageType {
+					log.Debug("erro de uma tela anterior descartado", "id", event.Id, "erro", event.Payload)
 					continue
 				}
 				currentScreen.HandleEvent(event)
@@ -91,7 +101,7 @@ func main() {
 		currentScreen.Render()
 		rl.EndDrawing()
 
-		currentScreen = next
+		switchTo(next)
 	}
 }
 

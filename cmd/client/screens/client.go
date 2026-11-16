@@ -17,12 +17,14 @@ type Client struct {
 	handlerManager *tcp.HandlerManager
 	events         chan<- components.Event
 
-	mu  sync.Mutex
-	tcp *tcp.TCPClient
+	mu         sync.Mutex
+	tcp        *tcp.TCPClient
+	generation uint64
+	pending    map[string]uint64
 }
 
 func NewClient(address string, handlerManager *tcp.HandlerManager, events chan<- components.Event) *Client {
-	return &Client{address: address, handlerManager: handlerManager, events: events}
+	return &Client{address: address, handlerManager: handlerManager, events: events, pending: make(map[string]uint64)}
 }
 
 func (c *Client) SetAddress(address string) {
@@ -52,6 +54,7 @@ func (c *Client) Connect() error {
 		return err
 	}
 	c.tcp = tcpClient
+	clear(c.pending)
 	go c.watch(tcpClient)
 	return nil
 }
@@ -79,6 +82,23 @@ func (c *Client) Close() {
 	}
 }
 
+func (c *Client) NextGeneration() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.generation++
+}
+
+func (c *Client) Settle(event components.Event) (stale bool) {
+	if event.Id == "" {
+		return false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	generation, ok := c.pending[event.Id]
+	delete(c.pending, event.Id)
+	return ok && generation != c.generation
+}
+
 func send[T any](c *Client, messageType string, payload T) error {
 	c.mu.Lock()
 	tcpClient := c.tcp
@@ -86,8 +106,14 @@ func send[T any](c *Client, messageType string, payload T) error {
 	if tcpClient == nil {
 		return ErrNotConnected
 	}
-	_, err := tcpClient.SendRequest(messageType, payload)
-	return err
+	id, err := tcpClient.SendRequest(messageType, payload)
+	if err != nil {
+		return err
+	}
+	c.mu.Lock()
+	c.pending[id] = c.generation
+	c.mu.Unlock()
+	return nil
 }
 
 func (c *Client) Login(request messages.LoginRequest) error {
