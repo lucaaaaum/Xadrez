@@ -21,7 +21,7 @@
 
 ### Segurança
 
-- [ ] TLS na conexão cliente-servidor.
+- [x] TLS na conexão cliente-servidor.
 - [x] Senhas com hash (Argon2id).
 - [ ] Token de sessão aleatório (`crypto/rand`).
 - [x] Validação de que só o jogador da vez move as próprias peças.
@@ -88,7 +88,7 @@
 - [ ] Roque, sem passar por casa atacada e com rei e torre sem terem se movido.
 - [ ] En passant.
 - [x] Promoção, com a peça escolhida no `MoveRequest`.
-- [ ] Turnos, com a fila de ações por partida.
+- [x] Turnos, com a fila de ações por partida (o `Game` controla a vez).
 - [x] Tabuleiro atualizado para jogadores e espectadores a cada lance.
 - [x] Erros do domínio enviados ao cliente como erro de cliente.
 - [x] Nome de sala único na criação.
@@ -105,7 +105,7 @@
 
 ## Eventos
 
-- [ ] Barramento de eventos no servidor.
+- [x] Barramento de eventos no servidor (o próprio `HandlerManager`, despachando por tipo de mensagem).
 - [ ] Log de eventos: cadastro, login, início e fim de partida, erros.
 
 ## Persistência
@@ -146,7 +146,7 @@
 
 - [x] Testes unitários das regras do xadrez.
 - [ ] Testes funcionais cobrindo todos os resultados de partida.
-- [ ] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
+- [x] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).
 
 ## Documentação
