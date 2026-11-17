@@ -53,7 +53,7 @@ func main() {
 	client := screens.NewClient(cfg.ServerAddress, hm, events)
 	defer client.Close()
 
-	rl.SetConfigFlags(rl.FlagWindowResizable)
+	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagWindowHighdpi)
 	rl.InitWindow(windowWidth, windowHeight, windowTitle)
 	defer rl.CloseWindow()
 
