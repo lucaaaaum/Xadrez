@@ -188,3 +188,29 @@ func TestLegalMoves(t *testing.T) {
 		t.Fatalf("casa vazia não deveria ter lances, teve %v", moves)
 	}
 }
+
+func TestOpponent(t *testing.T) {
+	if White.Opponent() != Black || Black.Opponent() != White {
+		t.Fatal("o oponente das brancas são as pretas e vice-versa")
+	}
+}
+
+func TestIsPromotionOnlyForPawnOnLastRank(t *testing.T) {
+	g := NewGame()
+	if g.IsPromotion(4, 1, 3) {
+		t.Fatal("avanço de peão no meio do tabuleiro não é promoção")
+	}
+	if g.IsPromotion(3, 0, 7) {
+		t.Fatal("só peão pode ser promovido")
+	}
+	if g.IsPromotion(4, 3, 7) || g.IsPromotion(-1, 0, 7) {
+		t.Fatal("casa vazia ou fora do tabuleiro não é promoção")
+	}
+}
+
+func TestGameStartsWithWhiteToMove(t *testing.T) {
+	g := NewGame()
+	if g.CurrentTurn() != White || g.Status() != Ongoing || g.InCheck() {
+		t.Fatalf("estado inicial inesperado: vez %v, status %v, xeque %v", g.CurrentTurn(), g.Status(), g.InCheck())
+	}
+}
