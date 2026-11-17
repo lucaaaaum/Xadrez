@@ -145,7 +145,7 @@
 ## Testes
 
 - [x] Testes unitários das regras do xadrez.
-- [ ] Testes funcionais cobrindo todos os resultados de partida.
+- [x] Testes funcionais cobrindo todos os resultados de partida.
 - [x] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).
 
