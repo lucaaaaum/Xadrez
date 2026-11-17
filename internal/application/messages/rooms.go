@@ -35,3 +35,12 @@ type InviteResponse struct {
 	From string `json:"from"`
 	To   string `json:"to"`
 }
+
+type LeaveRoomRequest struct {
+	Room string `json:"room"`
+}
+
+type LeaveRoomResponse struct {
+	Room   string `json:"room"`
+	Closed bool   `json:"closed"`
+}

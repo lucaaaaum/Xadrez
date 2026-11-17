@@ -96,14 +96,7 @@ func (h *MatchHandler) respondAndNotify(ctx context.Context, author string, matc
 		log.Error("falha ao buscar os participantes para notificar", "sala", match.Room, "erro", err)
 		return response
 	}
-	for _, participant := range room.Participants {
-		if participant == author {
-			continue
-		}
-		if err := h.notifier.SendToUser(participant, matchUpdatedMessageType, response); err != nil {
-			log.Debug("participante não notificado", "sala", match.Room, "usuário", participant, "erro", err)
-		}
-	}
+	notifyParticipants(h.notifier, room.Participants, author, matchUpdatedMessageType, response)
 	return response
 }
 

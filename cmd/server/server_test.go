@@ -394,3 +394,86 @@ func TestNewMatchAfterFinish(t *testing.T) {
 		t.Fatalf("nova partida inesperada: %+v", response)
 	}
 }
+
+func TestLeaveRoom(t *testing.T) {
+	address := startServer(t)
+	ana := login(t, address, "ana")
+	bob := login(t, address, "bob")
+	ana.ok("create_room", messages.CreateRoomRequest{Room: "sala"}, nil)
+	bob.ok("join_room", messages.JoinRoomRequest{Room: "sala"}, nil)
+	ana.event("room_updated", nil)
+
+	var left messages.LeaveRoomResponse
+	bob.ok("leave_room", messages.LeaveRoomRequest{Room: "sala"}, &left)
+	if left.Closed {
+		t.Fatal("a saída de um participante não deveria fechar a sala")
+	}
+	var updated messages.RoomResponse
+	ana.event("room_updated", &updated)
+	if !slices.Equal(updated.Participants, []string{"ana"}) {
+		t.Fatalf("o administrador deveria ver bob fora da sala: %v", updated.Participants)
+	}
+	if text := bob.fail("leave_room", messages.LeaveRoomRequest{Room: "sala"}); text != "você não está na sala sala" {
+		t.Fatalf("mensagem inesperada: %q", text)
+	}
+
+	var room messages.RoomResponse
+	bob.ok("join_room", messages.JoinRoomRequest{Room: "sala"}, &room)
+	if !slices.Equal(room.Participants, []string{"ana", "bob"}) {
+		t.Fatalf("bob deveria conseguir voltar à sala: %v", room.Participants)
+	}
+	bob.ok("join_room", messages.JoinRoomRequest{Room: "sala"}, &room)
+	if !slices.Equal(room.Participants, []string{"ana", "bob"}) {
+		t.Fatalf("entrar de novo não deveria duplicar o participante: %v", room.Participants)
+	}
+}
+
+func TestLeavingDuringMatch(t *testing.T) {
+	t.Run("jogador sai e perde", func(t *testing.T) {
+		p := startMatch(t, startServer(t))
+		p.black.ok("leave_room", messages.LeaveRoomRequest{Room: "sala"}, nil)
+		var update messages.MatchResponse
+		p.white.event("match_updated", &update)
+		requireOutcome(t, "ana", update, chess.OutcomeResignation, "ana")
+		p.spectator.event("match_updated", &update)
+		requireOutcome(t, "carol", update, chess.OutcomeResignation, "ana")
+	})
+
+	t.Run("administrador fecha a sala", func(t *testing.T) {
+		address := startServer(t)
+		admin := login(t, address, "dave")
+		white := login(t, address, "ana")
+		black := login(t, address, "bob")
+		admin.ok("create_room", messages.CreateRoomRequest{Room: "sala"}, nil)
+		white.ok("join_room", messages.JoinRoomRequest{Room: "sala"}, nil)
+		black.ok("join_room", messages.JoinRoomRequest{Room: "sala"}, nil)
+		admin.ok("start_match", messages.StartMatchRequest{Room: "sala", White: "ana", Black: "bob"}, nil)
+
+		var left messages.LeaveRoomResponse
+		admin.ok("leave_room", messages.LeaveRoomRequest{Room: "sala"}, &left)
+		if !left.Closed {
+			t.Fatal("a saída do administrador deveria fechar a sala")
+		}
+		for name, c := range map[string]*testClient{"ana": white, "bob": black} {
+			var update messages.MatchResponse
+			for update.Outcome == chess.OutcomeNone {
+				c.event("match_updated", &update)
+			}
+			requireOutcome(t, name, update, chess.OutcomeRoomClosed, "")
+			var closed messages.LeaveRoomResponse
+			c.event("room_closed", &closed)
+			if closed.Room != "sala" || !closed.Closed {
+				t.Fatalf("%s: aviso de fechamento inesperado: %+v", name, closed)
+			}
+		}
+
+		var list messages.ListRoomsResponse
+		white.ok("list_rooms", messages.ListRoomsRequest{}, &list)
+		if len(list.Rooms) != 0 {
+			t.Fatalf("sala fechada não deveria aparecer na lista: %+v", list.Rooms)
+		}
+		if text := white.fail("join_room", messages.JoinRoomRequest{Room: "sala"}); text != "a sala sala não foi encontrada" {
+			t.Fatalf("mensagem inesperada: %q", text)
+		}
+	})
+}
