@@ -1,3 +1,5 @@
+*.pem
+
 # Created by https://www.toptal.com/developers/gitignore/api/go,direnv,git
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,direnv,git
 
