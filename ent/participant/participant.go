@@ -23,6 +23,8 @@ const (
 	FieldRoomID = "room_id"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
+	// FieldLeftAt holds the string denoting the left_at field in the database.
+	FieldLeftAt = "left_at"
 	// EdgeRoom holds the string denoting the room edge name in mutations.
 	EdgeRoom = "room"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -70,6 +72,7 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldRoomID,
 	FieldUserID,
+	FieldLeftAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -119,6 +122,11 @@ func ByRoomID(opts ...sql.OrderTermOption) OrderOption {
 // ByUserID orders the results by the user_id field.
 func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByLeftAt orders the results by the left_at field.
+func ByLeftAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLeftAt, opts...).ToFunc()
 }
 
 // ByRoomField orders the results by room field.

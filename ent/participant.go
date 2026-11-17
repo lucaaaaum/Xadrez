@@ -28,6 +28,8 @@ type Participant struct {
 	RoomID uuid.UUID `json:"room_id,omitempty"`
 	// UserID holds the value of the "user_id" field.
 	UserID uuid.UUID `json:"user_id,omitempty"`
+	// LeftAt holds the value of the "left_at" field.
+	LeftAt *time.Time `json:"left_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ParticipantQuery when eager-loading is set.
 	Edges        ParticipantEdges `json:"edges"`
@@ -94,7 +96,7 @@ func (*Participant) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case participant.FieldCreatedAt, participant.FieldUpdatedAt:
+		case participant.FieldCreatedAt, participant.FieldUpdatedAt, participant.FieldLeftAt:
 			values[i] = new(sql.NullTime)
 		case participant.FieldID, participant.FieldRoomID, participant.FieldUserID:
 			values[i] = new(uuid.UUID)
@@ -142,6 +144,13 @@ func (_m *Participant) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value != nil {
 				_m.UserID = *value
+			}
+		case participant.FieldLeftAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field left_at", values[i])
+			} else if value.Valid {
+				_m.LeftAt = new(time.Time)
+				*_m.LeftAt = value.Time
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -210,6 +219,11 @@ func (_m *Participant) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
+	builder.WriteString(", ")
+	if v := _m.LeftAt; v != nil {
+		builder.WriteString("left_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

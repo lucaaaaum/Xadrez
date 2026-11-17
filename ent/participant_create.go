@@ -64,6 +64,20 @@ func (_c *ParticipantCreate) SetUserID(v uuid.UUID) *ParticipantCreate {
 	return _c
 }
 
+// SetLeftAt sets the "left_at" field.
+func (_c *ParticipantCreate) SetLeftAt(v time.Time) *ParticipantCreate {
+	_c.mutation.SetLeftAt(v)
+	return _c
+}
+
+// SetNillableLeftAt sets the "left_at" field if the given value is not nil.
+func (_c *ParticipantCreate) SetNillableLeftAt(v *time.Time) *ParticipantCreate {
+	if v != nil {
+		_c.SetLeftAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *ParticipantCreate) SetID(v uuid.UUID) *ParticipantCreate {
 	_c.mutation.SetID(v)
@@ -229,6 +243,10 @@ func (_c *ParticipantCreate) createSpec() (*Participant, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(participant.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.LeftAt(); ok {
+		_spec.SetField(participant.FieldLeftAt, field.TypeTime, value)
+		_node.LeftAt = &value
 	}
 	if nodes := _c.mutation.RoomIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
