@@ -59,13 +59,13 @@
 - [x] Partida com referência aos participantes branco e preto, e lances ligados à partida.
 - [x] Criador da sala definido como administrador.
 - [x] Entrar numa sala como espectador.
-- [ ] Sair da sala.
+- [x] Sair da sala, com desistência de quem está jogando.
 - [x] Administrador escolhe os jogadores branco e preto e inicia a partida.
 - [x] Uma partida por vez na sala.
 - [x] Nova partida na mesma sala após o fim da anterior.
 - [ ] Administrador bane um participante.
 - [ ] Banido impedido de entrar de novo.
-- [ ] Transferência de administrador quando ele sai.
+- [x] Sala fechada quando o administrador sai, encerrando a partida sem vencedor.
 
 ### Convites
 
