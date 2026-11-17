@@ -60,6 +60,7 @@ type MatchScreen struct {
 	promotion     *messages.MoveRequest
 	waiting       bool
 	confirmResign bool
+	roomClosed    bool
 	errorMessage  string
 
 	refreshRoom   bool
@@ -92,6 +93,18 @@ func (s *MatchScreen) HandleEvent(event components.Event) {
 			return
 		}
 		if s.playing() {
+			return
+		}
+	case "room_updated":
+		if room, ok := event.Payload.(messages.RoomResponse); ok && room.Room == s.match.Room {
+			s.room = room
+			s.updateSpectators()
+			return
+		}
+	case "room_closed":
+		if response, ok := event.Payload.(messages.LeaveRoomResponse); ok && response.Room == s.match.Room {
+			s.roomClosed = true
+			s.errorMessage = roomClosedNotice(response.Room)
 			return
 		}
 	case "list_rooms_ok":
@@ -179,7 +192,11 @@ func (s *MatchScreen) handleAction() {
 			return s.session.client.Resign(messages.ResignRequest{Room: s.match.Room})
 		})
 	case actionLeave:
-		s.next = NewRoomScreen(s.session, s.room)
+		if s.roomClosed {
+			s.next = newRoomsScreenWithNotice(s.session, roomClosedNotice(s.match.Room))
+		} else {
+			s.next = NewRoomScreen(s.session, s.room)
+		}
 	case actionPromote:
 		if s.promotion != nil {
 			request := *s.promotion
@@ -476,6 +493,8 @@ func (s *MatchScreen) outcomeText() string {
 		return fmt.Sprintf("Desistência. Vencedor: %s", s.match.Winner)
 	case chess.OutcomeDisconnection:
 		return fmt.Sprintf("Oponente desconectado. Vencedor: %s", s.match.Winner)
+	case chess.OutcomeRoomClosed:
+		return "Sala fechada pelo administrador. Partida encerrada sem vencedor."
 	}
 	return string(s.match.Outcome)
 }

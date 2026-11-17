@@ -80,7 +80,7 @@ func (s *Session) handleCommonEvent(event components.Event) (components.Screen, 
 			s.invite = &invite
 		}
 		return nil, true
-	case "decline_invite_ok", "room_invite_declined":
+	case "decline_invite_ok", "room_invite_declined", "leave_room_ok", "room_closed", "room_updated":
 		return nil, true
 	case "join_room_ok", "create_room_ok":
 		if room, ok := event.Payload.(messages.RoomResponse); ok {

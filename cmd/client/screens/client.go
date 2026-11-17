@@ -140,6 +140,10 @@ func (c *Client) InviteToRoom(request messages.InviteToRoomRequest) error {
 	return send(c, "invite_to_room", request)
 }
 
+func (c *Client) LeaveRoom(request messages.LeaveRoomRequest) error {
+	return send(c, "leave_room", request)
+}
+
 func (c *Client) DeclineInvite(request messages.DeclineInviteRequest) error {
 	return send(c, "decline_invite", request)
 }
