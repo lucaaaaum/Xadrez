@@ -1,8 +1,10 @@
 package tcp
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
-	"net"
+	"os"
 	"strconv"
 	"sync/atomic"
 )
@@ -13,7 +15,16 @@ type TCPClient struct {
 }
 
 func Dial(address string, handlerManager *HandlerManager) (*TCPClient, error) {
-	conn, err := net.Dial("tcp", address)
+	pemFile, err := os.ReadFile("cert.pem")
+	if err != nil {
+		return nil, fmt.Errorf("erro ao ler o arquivo de certificado: %w", err)
+	}
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(pemFile)
+	tlsConfig := &tls.Config{
+		RootCAs: certPool,
+	}
+	conn, err := tls.Dial("tcp", address, tlsConfig)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao conectar ao servidor: %w", err)
 	}
