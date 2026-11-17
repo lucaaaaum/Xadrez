@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"sync"
+	"time"
 
 	"xadrez/ent"
 	"xadrez/ent/gameroom"
@@ -71,9 +72,16 @@ func (s *RoomService) JoinRoom(ctx context.Context, name, username string) (room
 		return rooms.Room{}, err
 	}
 
-	_, err = s.client.Participant.Create().SetRoomID(record.ID).SetUserID(userID).Save(ctx)
-	if ent.IsConstraintError(err) {
-		return rooms.Room{}, domain.NewError("o usuário %s já está na sala %s", username, name)
+	existing, err := s.client.Participant.Query().
+		Where(participant.RoomID(record.ID), participant.UserID(userID)).
+		Only(ctx)
+	switch {
+	case ent.IsNotFound(err):
+		_, err = s.client.Participant.Create().SetRoomID(record.ID).SetUserID(userID).Save(ctx)
+	case err == nil && existing.LeftAt != nil:
+		_, err = s.client.Participant.UpdateOne(existing).ClearLeftAt().Save(ctx)
+	case err == nil:
+		return toRoom(record), nil
 	}
 	if err != nil {
 		return rooms.Room{}, fmt.Errorf("falha ao adicionar o usuário à sala: %w", err)
@@ -153,11 +161,46 @@ func (s *RoomService) DeclineInvite(ctx context.Context, name, invitee string) (
 	return invite, nil
 }
 
+func (s *RoomService) LeaveRoom(ctx context.Context, name, username string) (bool, error) {
+	record, err := s.activeRoom(ctx, name)
+	if err != nil {
+		return false, err
+	}
+	userID, err := s.userID(ctx, username)
+	if err != nil {
+		return false, err
+	}
+
+	if record.AdminID == userID {
+		if err := s.client.GameRoom.UpdateOne(record).SetStatus(gameroom.StatusInactive).Exec(ctx); err != nil {
+			return false, fmt.Errorf("falha ao fechar a sala: %w", err)
+		}
+		s.mu.Lock()
+		delete(s.invites, name)
+		s.mu.Unlock()
+		log.Info("sala fechada", "sala", name, "administrador", username)
+		return true, nil
+	}
+
+	left, err := s.client.Participant.Update().
+		Where(participant.RoomID(record.ID), participant.UserID(userID), participant.LeftAtIsNil()).
+		SetLeftAt(time.Now().UTC()).
+		Save(ctx)
+	if err != nil {
+		return false, fmt.Errorf("falha ao remover o usuário da sala: %w", err)
+	}
+	if left == 0 {
+		return false, domain.NewError("o usuário %s não está na sala %s", username, name)
+	}
+	log.Info("usuário saiu da sala", "sala", name, "usuário", username)
+	return false, nil
+}
+
 func (s *RoomService) roomQuery() *ent.GameRoomQuery {
 	return s.client.GameRoom.Query().
 		WithAdmin().
 		WithParticipants(func(q *ent.ParticipantQuery) {
-			q.WithUser().Order(ent.Asc(participant.FieldCreatedAt))
+			q.Where(participant.LeftAtIsNil()).WithUser().Order(ent.Asc(participant.FieldCreatedAt))
 		})
 }
 

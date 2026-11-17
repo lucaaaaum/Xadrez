@@ -259,3 +259,55 @@ func TestAbandonGivesVictoryToOpponent(t *testing.T) {
 		t.Fatalf("espectador não tem partida para abandonar: %v", finished)
 	}
 }
+
+func TestLeaveWithoutMatch(t *testing.T) {
+	f := newMatchFixture(t)
+	_, ended, err := f.matches.Leave(context.Background(), "sala", "bob", false)
+	requireNoError(t, err)
+	if ended {
+		t.Fatal("sem partida em andamento nada deveria ser encerrado")
+	}
+}
+
+func TestPlayerLeavingResigns(t *testing.T) {
+	f := newMatchFixture(t)
+	f.start(t)
+
+	snapshot, ended, err := f.matches.Leave(context.Background(), "sala", "bob", false)
+	requireNoError(t, err)
+	if !ended || snapshot.Outcome != chess.OutcomeResignation || snapshot.Winner != "ana" {
+		t.Fatalf("esperada vitória da ana por desistência, obtido ended=%v %+v", ended, snapshot)
+	}
+	requireFinished(t, f.record(t), match.ResultWhite, match.TerminationResignation)
+}
+
+func TestSpectatorLeavingKeepsMatch(t *testing.T) {
+	ctx := context.Background()
+	f := newMatchFixture(t)
+	f.start(t)
+
+	_, ended, err := f.matches.Leave(ctx, "sala", "carol", false)
+	requireNoError(t, err)
+	if ended {
+		t.Fatal("a saída de um espectador não deveria encerrar a partida")
+	}
+	_, err = f.matches.GetMatch(ctx, "sala")
+	requireNoError(t, err)
+}
+
+func TestClosingRoomEndsOthersMatch(t *testing.T) {
+	ctx := context.Background()
+	f := newMatchFixture(t)
+	_, err := f.matches.StartMatch(ctx, "sala", "ana", "bob", "carol")
+	requireNoError(t, err)
+
+	snapshot, ended, err := f.matches.Leave(ctx, "sala", "ana", true)
+	requireNoError(t, err)
+	if !ended || snapshot.Outcome != chess.OutcomeRoomClosed || snapshot.Winner != "" {
+		t.Fatalf("esperado encerramento sem vencedor, obtido ended=%v %+v", ended, snapshot)
+	}
+	record := f.record(t)
+	if record.FinishedAt == nil || record.Result != nil || record.Termination == nil || *record.Termination != match.TerminationRoomClosed {
+		t.Fatalf("registro inesperado: fim %v resultado %v terminação %v", record.FinishedAt, record.Result, record.Termination)
+	}
+}

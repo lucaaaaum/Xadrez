@@ -21,4 +21,5 @@ type RoomService interface {
 	ListRooms(ctx context.Context) ([]Room, error)
 	InviteToRoom(ctx context.Context, name, admin, invitee string) (Invite, error)
 	DeclineInvite(ctx context.Context, name, invitee string) (Invite, error)
+	LeaveRoom(ctx context.Context, name, user string) (closed bool, err error)
 }

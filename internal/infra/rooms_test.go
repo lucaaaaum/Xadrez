@@ -50,10 +50,69 @@ func TestJoinRoom(t *testing.T) {
 		t.Fatalf("participantes inesperados: %v", room.Participants)
 	}
 
-	_, err = service.JoinRoom(ctx, "sala", "bob")
-	requireDomainError(t, err)
+	room, err = service.JoinRoom(ctx, "sala", "bob")
+	requireNoError(t, err)
+	if !slices.Equal(room.Participants, []string{"ana", "bob"}) {
+		t.Fatalf("entrar de novo não deveria duplicar o participante: %v", room.Participants)
+	}
 	_, err = service.JoinRoom(ctx, "inexistente", "bob")
 	requireDomainError(t, err)
+}
+
+func TestLeaveRoom(t *testing.T) {
+	ctx := context.Background()
+	service := newRoomFixture(t)
+	_, err := service.JoinRoom(ctx, "sala", "bob")
+	requireNoError(t, err)
+
+	closed, err := service.LeaveRoom(ctx, "sala", "bob")
+	requireNoError(t, err)
+	if closed {
+		t.Fatal("a saída de um participante não deveria fechar a sala")
+	}
+	room, err := service.GetRoom(ctx, "sala")
+	requireNoError(t, err)
+	if !slices.Equal(room.Participants, []string{"ana"}) {
+		t.Fatalf("bob deveria ter saído da sala: %v", room.Participants)
+	}
+
+	_, err = service.LeaveRoom(ctx, "sala", "bob")
+	requireDomainError(t, err)
+	_, err = service.LeaveRoom(ctx, "sala", "carol")
+	requireDomainError(t, err)
+
+	room, err = service.JoinRoom(ctx, "sala", "bob")
+	requireNoError(t, err)
+	if !slices.Equal(room.Participants, []string{"ana", "bob"}) {
+		t.Fatalf("bob deveria conseguir voltar à sala: %v", room.Participants)
+	}
+}
+
+func TestAdminLeavingClosesRoom(t *testing.T) {
+	ctx := context.Background()
+	service := newRoomFixture(t)
+	_, err := service.JoinRoom(ctx, "sala", "bob")
+	requireNoError(t, err)
+	_, err = service.InviteToRoom(ctx, "sala", "ana", "carol")
+	requireNoError(t, err)
+
+	closed, err := service.LeaveRoom(ctx, "sala", "ana")
+	requireNoError(t, err)
+	if !closed {
+		t.Fatal("a saída do administrador deveria fechar a sala")
+	}
+
+	_, err = service.GetRoom(ctx, "sala")
+	requireDomainError(t, err)
+	_, err = service.JoinRoom(ctx, "sala", "carol")
+	requireDomainError(t, err)
+	_, err = service.DeclineInvite(ctx, "sala", "carol")
+	requireDomainError(t, err)
+	list, err := service.ListRooms(ctx)
+	requireNoError(t, err)
+	if len(list) != 0 {
+		t.Fatalf("sala fechada não deveria aparecer na lista: %v", list)
+	}
 }
 
 func TestListRoomsSortedByName(t *testing.T) {
