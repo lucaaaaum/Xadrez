@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -202,6 +203,77 @@ func (s *MatchService) MakeMove(ctx context.Context, roomName, player string, fr
 }
 
 func (s *MatchService) Resign(ctx context.Context, roomName, player string) (chess.Match, error) {
+	return s.concede(ctx, roomName, player, chess.OutcomeResignation)
+}
+
+func (s *MatchService) Abandon(ctx context.Context, player string) ([]chess.Match, error) {
+	ongoing, err := s.client.Match.Query().
+		Where(
+			match.FinishedAtIsNil(),
+			match.Or(
+				match.HasWhitePlayerWith(participant.HasUserWith(user.Name(player))),
+				match.HasBlackPlayerWith(participant.HasUserWith(user.Name(player))),
+			),
+		).
+		WithRoom().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("falha ao buscar as partidas em andamento do usuário: %w", err)
+	}
+
+	finished := make([]chess.Match, 0, len(ongoing))
+	for _, record := range ongoing {
+		snapshot, err := s.concede(ctx, record.Edges.Room.Name, player, chess.OutcomeDisconnection)
+		if err != nil {
+			return finished, err
+		}
+		finished = append(finished, snapshot)
+	}
+	return finished, nil
+}
+
+var errNothingToFinish = errors.New("nenhuma partida a encerrar")
+
+func (s *MatchService) Leave(ctx context.Context, roomName, player string, closing bool) (chess.Match, bool, error) {
+	ongoing, err := s.client.Match.Query().
+		Where(match.HasRoomWith(gameroom.Name(roomName)), match.FinishedAtIsNil()).
+		Exist(ctx)
+	if err != nil {
+		return chess.Match{}, false, fmt.Errorf("falha ao buscar a partida em andamento: %w", err)
+	}
+	if !ongoing {
+		return chess.Match{}, false, nil
+	}
+
+	snapshot, err := s.finish(ctx, roomName, func(loaded *loadedMatch) (chess.Outcome, string, error) {
+		if color, ok := loaded.colorOf(player); ok {
+			return chess.OutcomeResignation, loaded.playerOf(color.Opponent()), nil
+		}
+		if closing {
+			return chess.OutcomeRoomClosed, "", nil
+		}
+		return chess.OutcomeNone, "", errNothingToFinish
+	})
+	if errors.Is(err, errNothingToFinish) {
+		return chess.Match{}, false, nil
+	}
+	if err != nil {
+		return chess.Match{}, false, err
+	}
+	return snapshot, true, nil
+}
+
+func (s *MatchService) concede(ctx context.Context, roomName, player string, outcome chess.Outcome) (chess.Match, error) {
+	return s.finish(ctx, roomName, func(loaded *loadedMatch) (chess.Outcome, string, error) {
+		color, ok := loaded.colorOf(player)
+		if !ok {
+			return chess.OutcomeNone, "", domain.NewError("o usuário %s não é jogador da partida na sala %s", player, roomName)
+		}
+		return outcome, loaded.playerOf(color.Opponent()), nil
+	})
+}
+
+func (s *MatchService) finish(ctx context.Context, roomName string, decide func(*loadedMatch) (chess.Outcome, string, error)) (chess.Match, error) {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
 		return chess.Match{}, fmt.Errorf("falha ao iniciar a transação: %w", err)
@@ -211,14 +283,14 @@ func (s *MatchService) Resign(ctx context.Context, roomName, player string) (che
 	if err != nil {
 		return chess.Match{}, rollback(tx, err)
 	}
-	color, ok := loaded.colorOf(player)
-	if !ok {
-		return chess.Match{}, rollback(tx, domain.NewError("o usuário %s não é jogador da partida na sala %s", player, roomName))
+	outcome, winner, err := decide(loaded)
+	if err != nil {
+		return chess.Match{}, rollback(tx, err)
 	}
 
 	snapshot := loaded.snapshot()
-	snapshot.Outcome = chess.OutcomeResignation
-	snapshot.Winner = loaded.playerOf(color.Opponent())
+	snapshot.Outcome = outcome
+	snapshot.Winner = winner
 	if err := finishMatch(ctx, tx, loaded.record, snapshot); err != nil {
 		return chess.Match{}, rollback(tx, err)
 	}
@@ -232,10 +304,11 @@ func (s *MatchService) Resign(ctx context.Context, roomName, player string) (che
 
 func finishMatch(ctx context.Context, tx *ent.Tx, record *ent.Match, snapshot chess.Match) error {
 	update := tx.Match.UpdateOne(record).SetFinishedAt(time.Now().UTC())
-	switch snapshot.Winner {
-	case "":
+	switch {
+	case snapshot.Outcome == chess.OutcomeRoomClosed:
+	case snapshot.Winner == "":
 		update.SetResult(match.ResultDraw)
-	case snapshot.White:
+	case snapshot.Winner == snapshot.White:
 		update.SetResult(match.ResultWhite)
 	default:
 		update.SetResult(match.ResultBlack)
@@ -247,6 +320,10 @@ func finishMatch(ctx context.Context, tx *ent.Tx, record *ent.Match, snapshot ch
 		update.SetTermination(match.TerminationStalemate)
 	case chess.OutcomeResignation:
 		update.SetTermination(match.TerminationResignation)
+	case chess.OutcomeDisconnection:
+		update.SetTermination(match.TerminationDisconnection)
+	case chess.OutcomeRoomClosed:
+		update.SetTermination(match.TerminationRoomClosed)
 	}
 	if _, err := update.Save(ctx); err != nil {
 		return fmt.Errorf("falha ao encerrar a partida: %w", err)

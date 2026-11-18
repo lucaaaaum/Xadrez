@@ -26,8 +26,21 @@ type InviteToRoomRequest struct {
 	User string `json:"user"`
 }
 
+type DeclineInviteRequest struct {
+	Room string `json:"room"`
+}
+
 type InviteResponse struct {
 	Room string `json:"room"`
 	From string `json:"from"`
 	To   string `json:"to"`
+}
+
+type LeaveRoomRequest struct {
+	Room string `json:"room"`
+}
+
+type LeaveRoomResponse struct {
+	Room   string `json:"room"`
+	Closed bool   `json:"closed"`
 }

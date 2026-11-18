@@ -41,6 +41,11 @@ func main() {
 	forwardTCPMessageAsScreenEvent[messages.RoomResponse](hm, events, "join_room_ok")
 	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "invite_to_room_ok")
 	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "room_invite")
+	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "decline_invite_ok")
+	forwardTCPMessageAsScreenEvent[messages.InviteResponse](hm, events, "room_invite_declined")
+	forwardTCPMessageAsScreenEvent[messages.LeaveRoomResponse](hm, events, "leave_room_ok")
+	forwardTCPMessageAsScreenEvent[messages.LeaveRoomResponse](hm, events, "room_closed")
+	forwardTCPMessageAsScreenEvent[messages.RoomResponse](hm, events, "room_updated")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "start_match_ok")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "get_match_ok")
 	forwardTCPMessageAsScreenEvent[messages.MatchResponse](hm, events, "make_move_ok")
@@ -51,7 +56,7 @@ func main() {
 	client := screens.NewClient(cfg.ServerAddress, hm, events)
 	defer client.Close()
 
-	rl.SetConfigFlags(rl.FlagWindowResizable)
+	rl.SetConfigFlags(rl.FlagWindowResizable | rl.FlagWindowHighdpi)
 	rl.InitWindow(windowWidth, windowHeight, windowTitle)
 	defer rl.CloseWindow()
 

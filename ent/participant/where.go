@@ -76,6 +76,11 @@ func UserID(v uuid.UUID) predicate.Participant {
 	return predicate.Participant(sql.FieldEQ(FieldUserID, v))
 }
 
+// LeftAt applies equality check predicate on the "left_at" field. It's identical to LeftAtEQ.
+func LeftAt(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldEQ(FieldLeftAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Participant {
 	return predicate.Participant(sql.FieldEQ(FieldCreatedAt, v))
@@ -194,6 +199,56 @@ func UserIDIn(vs ...uuid.UUID) predicate.Participant {
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
 func UserIDNotIn(vs ...uuid.UUID) predicate.Participant {
 	return predicate.Participant(sql.FieldNotIn(FieldUserID, vs...))
+}
+
+// LeftAtEQ applies the EQ predicate on the "left_at" field.
+func LeftAtEQ(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldEQ(FieldLeftAt, v))
+}
+
+// LeftAtNEQ applies the NEQ predicate on the "left_at" field.
+func LeftAtNEQ(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldNEQ(FieldLeftAt, v))
+}
+
+// LeftAtIn applies the In predicate on the "left_at" field.
+func LeftAtIn(vs ...time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldIn(FieldLeftAt, vs...))
+}
+
+// LeftAtNotIn applies the NotIn predicate on the "left_at" field.
+func LeftAtNotIn(vs ...time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldNotIn(FieldLeftAt, vs...))
+}
+
+// LeftAtGT applies the GT predicate on the "left_at" field.
+func LeftAtGT(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldGT(FieldLeftAt, v))
+}
+
+// LeftAtGTE applies the GTE predicate on the "left_at" field.
+func LeftAtGTE(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldGTE(FieldLeftAt, v))
+}
+
+// LeftAtLT applies the LT predicate on the "left_at" field.
+func LeftAtLT(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldLT(FieldLeftAt, v))
+}
+
+// LeftAtLTE applies the LTE predicate on the "left_at" field.
+func LeftAtLTE(v time.Time) predicate.Participant {
+	return predicate.Participant(sql.FieldLTE(FieldLeftAt, v))
+}
+
+// LeftAtIsNil applies the IsNil predicate on the "left_at" field.
+func LeftAtIsNil() predicate.Participant {
+	return predicate.Participant(sql.FieldIsNull(FieldLeftAt))
+}
+
+// LeftAtNotNil applies the NotNil predicate on the "left_at" field.
+func LeftAtNotNil() predicate.Participant {
+	return predicate.Participant(sql.FieldNotNull(FieldLeftAt))
 }
 
 // HasRoom applies the HasEdge predicate on the "room" edge.

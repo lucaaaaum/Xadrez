@@ -142,6 +142,7 @@ const (
 	TerminationFiftyMoves           Termination = "fifty_moves"
 	TerminationThreefoldRepetition  Termination = "threefold_repetition"
 	TerminationInsufficientMaterial Termination = "insufficient_material"
+	TerminationRoomClosed           Termination = "room_closed"
 )
 
 func (t Termination) String() string {
@@ -151,7 +152,7 @@ func (t Termination) String() string {
 // TerminationValidator is a validator for the "termination" field enum values. It is called by the builders before save.
 func TerminationValidator(t Termination) error {
 	switch t {
-	case TerminationCheckmate, TerminationStalemate, TerminationResignation, TerminationDisconnection, TerminationFiftyMoves, TerminationThreefoldRepetition, TerminationInsufficientMaterial:
+	case TerminationCheckmate, TerminationStalemate, TerminationResignation, TerminationDisconnection, TerminationFiftyMoves, TerminationThreefoldRepetition, TerminationInsufficientMaterial, TerminationRoomClosed:
 		return nil
 	default:
 		return fmt.Errorf("match: invalid enum value for termination field: %q", t)

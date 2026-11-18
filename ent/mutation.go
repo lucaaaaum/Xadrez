@@ -2851,6 +2851,7 @@ type ParticipantMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	left_at              *time.Time
 	clearedFields        map[string]struct{}
 	room                 *uuid.UUID
 	clearedroom          bool
@@ -3115,6 +3116,55 @@ func (m *ParticipantMutation) ResetUserID() {
 	m.user = nil
 }
 
+// SetLeftAt sets the "left_at" field.
+func (m *ParticipantMutation) SetLeftAt(t time.Time) {
+	m.left_at = &t
+}
+
+// LeftAt returns the value of the "left_at" field in the mutation.
+func (m *ParticipantMutation) LeftAt() (r time.Time, exists bool) {
+	v := m.left_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeftAt returns the old "left_at" field's value of the Participant entity.
+// If the Participant object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ParticipantMutation) OldLeftAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeftAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeftAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeftAt: %w", err)
+	}
+	return oldValue.LeftAt, nil
+}
+
+// ClearLeftAt clears the value of the "left_at" field.
+func (m *ParticipantMutation) ClearLeftAt() {
+	m.left_at = nil
+	m.clearedFields[participant.FieldLeftAt] = struct{}{}
+}
+
+// LeftAtCleared returns if the "left_at" field was cleared in this mutation.
+func (m *ParticipantMutation) LeftAtCleared() bool {
+	_, ok := m.clearedFields[participant.FieldLeftAt]
+	return ok
+}
+
+// ResetLeftAt resets all changes to the "left_at" field.
+func (m *ParticipantMutation) ResetLeftAt() {
+	m.left_at = nil
+	delete(m.clearedFields, participant.FieldLeftAt)
+}
+
 // ClearRoom clears the "room" edge to the GameRoom entity.
 func (m *ParticipantMutation) ClearRoom() {
 	m.clearedroom = true
@@ -3311,7 +3361,7 @@ func (m *ParticipantMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ParticipantMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.created_at != nil {
 		fields = append(fields, participant.FieldCreatedAt)
 	}
@@ -3323,6 +3373,9 @@ func (m *ParticipantMutation) Fields() []string {
 	}
 	if m.user != nil {
 		fields = append(fields, participant.FieldUserID)
+	}
+	if m.left_at != nil {
+		fields = append(fields, participant.FieldLeftAt)
 	}
 	return fields
 }
@@ -3340,6 +3393,8 @@ func (m *ParticipantMutation) Field(name string) (ent.Value, bool) {
 		return m.RoomID()
 	case participant.FieldUserID:
 		return m.UserID()
+	case participant.FieldLeftAt:
+		return m.LeftAt()
 	}
 	return nil, false
 }
@@ -3357,6 +3412,8 @@ func (m *ParticipantMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldRoomID(ctx)
 	case participant.FieldUserID:
 		return m.OldUserID(ctx)
+	case participant.FieldLeftAt:
+		return m.OldLeftAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Participant field %s", name)
 }
@@ -3394,6 +3451,13 @@ func (m *ParticipantMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUserID(v)
 		return nil
+	case participant.FieldLeftAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeftAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Participant field %s", name)
 }
@@ -3423,7 +3487,11 @@ func (m *ParticipantMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *ParticipantMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(participant.FieldLeftAt) {
+		fields = append(fields, participant.FieldLeftAt)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -3436,6 +3504,11 @@ func (m *ParticipantMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *ParticipantMutation) ClearField(name string) error {
+	switch name {
+	case participant.FieldLeftAt:
+		m.ClearLeftAt()
+		return nil
+	}
 	return fmt.Errorf("unknown Participant nullable field %s", name)
 }
 
@@ -3454,6 +3527,9 @@ func (m *ParticipantMutation) ResetField(name string) error {
 		return nil
 	case participant.FieldUserID:
 		m.ResetUserID()
+		return nil
+	case participant.FieldLeftAt:
+		m.ResetLeftAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Participant field %s", name)

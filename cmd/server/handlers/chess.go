@@ -5,6 +5,7 @@ import (
 	"xadrez/internal/application/messages"
 	"xadrez/internal/domain/chess"
 	"xadrez/internal/domain/rooms"
+	"xadrez/internal/infra/tcp"
 
 	"charm.land/log/v2"
 )
@@ -72,6 +73,21 @@ func (h *MatchHandler) HandleResign(ctx context.Context, request messages.Resign
 	return h.respondAndNotify(ctx, player, match), nil
 }
 
+func (h *MatchHandler) HandleDisconnect(ctx context.Context) {
+	player, ok := tcp.UserFrom(ctx)
+	if !ok {
+		return
+	}
+	ctx = context.WithoutCancel(ctx)
+	matches, err := h.matchService.Abandon(ctx, player)
+	if err != nil {
+		log.Error("falha ao encerrar as partidas do usuário desconectado", "usuário", player, "erro", err)
+	}
+	for _, match := range matches {
+		h.respondAndNotify(ctx, player, match)
+	}
+}
+
 func (h *MatchHandler) respondAndNotify(ctx context.Context, author string, match chess.Match) messages.MatchResponse {
 	response := matchResponse(match)
 
@@ -80,14 +96,7 @@ func (h *MatchHandler) respondAndNotify(ctx context.Context, author string, matc
 		log.Error("falha ao buscar os participantes para notificar", "sala", match.Room, "erro", err)
 		return response
 	}
-	for _, participant := range room.Participants {
-		if participant == author {
-			continue
-		}
-		if err := h.notifier.SendToUser(participant, matchUpdatedMessageType, response); err != nil {
-			log.Debug("participante não notificado", "sala", match.Room, "usuário", participant, "erro", err)
-		}
-	}
+	notifyParticipants(h.notifier, room.Participants, author, matchUpdatedMessageType, response)
 	return response
 }
 

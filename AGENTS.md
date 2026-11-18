@@ -12,9 +12,9 @@ O ambiente vem do `flake.nix` (Go 1.27, gopls, gotools, netcat, ent) via direnv 
 
 - Build: `go build ./...`
 - Rodar o servidor (escuta em `:9000`): `go run ./cmd/server`
-- Testes: `go test ./internal/...` / um teste: `go test ./internal/domain/chess -run NomeDoTeste`
+- Testes: `go test ./internal/... ./cmd/...` (os funcionais, de ponta a ponta, ficam em `cmd/server/server_test.go`) / um teste: `go test ./internal/domain/chess -run NomeDoTeste`
 - Regenerar o código do ent após mudar `ent/schema/`: `go generate ./ent` (todo o resto de `ent/` é gerado; não editar à mão)
-- Testar o protocolo manualmente: `nc localhost 9000` e enviar uma linha JSON, ex.: `{"id":"1","type":"login","payload":{"name":"a","password":"b"}}`
+- Testar o protocolo manualmente (o servidor usa TLS com `cert.pem`/`key.pem` na raiz): `openssl s_client -quiet -connect localhost:9000` e enviar uma linha JSON, ex.: `{"id":"1","type":"login","payload":{"name":"a","password":"b"}}`
 
 O código usa métodos genéricos (ex.: `func (c *TCPClient) SendRequest[T any](...)`), recurso de versões recentes do Go; não é erro de sintaxe.
 

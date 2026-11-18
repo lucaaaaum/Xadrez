@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 	"xadrez/internal/domain"
 
 	"charm.land/log/v2"
@@ -67,12 +68,19 @@ func (m *HandlerManager) RegisterHandler[T any](messageType string, handleFunc f
 
 func (m *HandlerManager) RegisterRequestHandler[Req, Res any](messageType string, handleFunc func(ctx context.Context, request Req) (Res, error)) {
 	m.RegisterHandler(messageType, func(ctx context.Context, message Message[Req]) error {
+		start := time.Now()
 		response, err := handleFunc(ctx, message.Payload)
 		if err != nil {
 			log.Warn("falha ao processar requisição", "tipo", messageType, "erro", err)
 			return err
 		}
-		return peerFrom(ctx).Reply(message.Id, messageType+"_ok", response)
+		peer := peerFrom(ctx)
+		if err := peer.Reply(message.Id, messageType+"_ok", response); err != nil {
+			return err
+		}
+		user, _ := UserFrom(ctx)
+		log.Info("requisição atendida", "tipo", messageType, "cliente", peer.RemoteAddr(), "usuário", user, "id", message.Id, "duração", time.Since(start))
+		return nil
 	})
 }
 

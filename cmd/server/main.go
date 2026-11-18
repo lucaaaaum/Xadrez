@@ -44,17 +44,20 @@ func registerHandlers(handlerManager *tcp.HandlerManager, services Services, not
 	userHandler := handlers.NewUserHandler(services.userService)
 	handlerManager.RegisterRequestHandler("list_online_users", userHandler.HandleListOnlineUsers)
 
-	roomHandler := handlers.NewRoomHandler(services.roomService, services.userService, notifier)
+	roomHandler := handlers.NewRoomHandler(services.roomService, services.userService, services.matchService, notifier)
 	handlerManager.RegisterRequestHandler("create_room", roomHandler.HandleCreateRoom)
 	handlerManager.RegisterRequestHandler("join_room", roomHandler.HandleJoinRoom)
 	handlerManager.RegisterRequestHandler("list_rooms", roomHandler.HandleListRooms)
 	handlerManager.RegisterRequestHandler("invite_to_room", roomHandler.HandleInviteToRoom)
+	handlerManager.RegisterRequestHandler("decline_invite", roomHandler.HandleDeclineInvite)
+	handlerManager.RegisterRequestHandler("leave_room", roomHandler.HandleLeaveRoom)
 
 	matchHandler := handlers.NewMatchHandler(services.matchService, services.roomService, notifier)
 	handlerManager.RegisterRequestHandler("start_match", matchHandler.HandleStartMatch)
 	handlerManager.RegisterRequestHandler("get_match", matchHandler.HandleGetMatch)
 	handlerManager.RegisterRequestHandler("make_move", matchHandler.HandleMakeMove)
 	handlerManager.RegisterRequestHandler("resign", matchHandler.HandleResign)
+	handlerManager.RegisterDisconnectHandler(matchHandler.HandleDisconnect)
 
 }
 

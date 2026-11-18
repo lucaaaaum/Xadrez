@@ -37,7 +37,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "result", Type: field.TypeEnum, Nullable: true, Enums: []string{"white", "black", "draw"}},
-		{Name: "termination", Type: field.TypeEnum, Nullable: true, Enums: []string{"checkmate", "stalemate", "resignation", "disconnection", "fifty_moves", "threefold_repetition", "insufficient_material"}},
+		{Name: "termination", Type: field.TypeEnum, Nullable: true, Enums: []string{"checkmate", "stalemate", "resignation", "disconnection", "fifty_moves", "threefold_repetition", "insufficient_material", "room_closed"}},
 		{Name: "finished_at", Type: field.TypeTime, Nullable: true},
 		{Name: "room_id", Type: field.TypeUUID},
 		{Name: "white_participant_id", Type: field.TypeUUID},
@@ -108,6 +108,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "left_at", Type: field.TypeTime, Nullable: true},
 		{Name: "room_id", Type: field.TypeUUID},
 		{Name: "user_id", Type: field.TypeUUID},
 	}
@@ -119,13 +120,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "participants_game_rooms_participants",
-				Columns:    []*schema.Column{ParticipantsColumns[3]},
+				Columns:    []*schema.Column{ParticipantsColumns[4]},
 				RefColumns: []*schema.Column{GameRoomsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "participants_users_participations",
-				Columns:    []*schema.Column{ParticipantsColumns[4]},
+				Columns:    []*schema.Column{ParticipantsColumns[5]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -134,7 +135,7 @@ var (
 			{
 				Name:    "participant_room_id_user_id",
 				Unique:  true,
-				Columns: []*schema.Column{ParticipantsColumns[3], ParticipantsColumns[4]},
+				Columns: []*schema.Column{ParticipantsColumns[4], ParticipantsColumns[5]},
 			},
 		},
 	}

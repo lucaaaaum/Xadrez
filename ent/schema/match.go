@@ -33,6 +33,7 @@ func (Match) Fields() []ent.Field {
 				"fifty_moves",
 				"threefold_repetition",
 				"insufficient_material",
+				"room_closed",
 			).
 			Optional().
 			Nillable(),

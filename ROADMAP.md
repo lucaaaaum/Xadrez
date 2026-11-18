@@ -21,7 +21,7 @@
 
 ### Segurança
 
-- [ ] TLS na conexão cliente-servidor.
+- [x] TLS na conexão cliente-servidor.
 - [x] Senhas com hash (Argon2id).
 - [ ] Token de sessão aleatório (`crypto/rand`).
 - [x] Validação de que só o jogador da vez move as próprias peças.
@@ -59,20 +59,20 @@
 - [x] Partida com referência aos participantes branco e preto, e lances ligados à partida.
 - [x] Criador da sala definido como administrador.
 - [x] Entrar numa sala como espectador.
-- [ ] Sair da sala.
+- [x] Sair da sala, com desistência de quem está jogando.
 - [x] Administrador escolhe os jogadores branco e preto e inicia a partida.
 - [x] Uma partida por vez na sala.
 - [x] Nova partida na mesma sala após o fim da anterior.
 - [ ] Administrador bane um participante.
 - [ ] Banido impedido de entrar de novo.
-- [ ] Transferência de administrador quando ele sai.
+- [x] Sala fechada quando o administrador sai, encerrando a partida sem vencedor.
 
 ### Convites
 
 - [x] Administrador convida qualquer usuário online para a sala (sem lista de amigos).
 - [x] Convite entregue ao convidado em tempo real.
 - [x] Aceitar convite, entrando na sala como participante.
-- [ ] Recusar convite, com aviso ao administrador.
+- [x] Recusar convite, com aviso ao administrador.
 - [ ] Cancelar convite pendente.
 - [ ] Convite expirado quando a sala fecha ou o convidado desconecta.
 - [ ] Listagem dos convites pendentes do usuário.
@@ -88,7 +88,7 @@
 - [ ] Roque, sem passar por casa atacada e com rei e torre sem terem se movido.
 - [ ] En passant.
 - [x] Promoção, com a peça escolhida no `MoveRequest`.
-- [ ] Turnos, com a fila de ações por partida.
+- [x] Turnos, com a fila de ações por partida (o `Game` controla a vez).
 - [x] Tabuleiro atualizado para jogadores e espectadores a cada lance.
 - [x] Erros do domínio enviados ao cliente como erro de cliente.
 - [x] Nome de sala único na criação.
@@ -101,11 +101,11 @@
 - [ ] Empate por 50 lances, repetição tripla e material insuficiente.
 - [x] Resultado (vitória, derrota, empate) enviado aos dois jogadores.
 - [x] Desistência, com vitória concedida ao oponente.
-- [ ] Vitória por desconexão do oponente.
+- [x] Vitória por desconexão do oponente.
 
 ## Eventos
 
-- [ ] Barramento de eventos no servidor.
+- [x] Barramento de eventos no servidor (o próprio `HandlerManager`, despachando por tipo de mensagem).
 - [ ] Log de eventos: cadastro, login, início e fim de partida, erros.
 
 ## Persistência
@@ -145,15 +145,15 @@
 ## Testes
 
 - [x] Testes unitários das regras do xadrez.
-- [ ] Testes funcionais cobrindo todos os resultados de partida.
-- [ ] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
+- [x] Testes funcionais cobrindo todos os resultados de partida.
+- [x] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).
 
-## Documentação
+## Documentação (no README)
 
-- [ ] Componentes de rede: cliente, servidor, banco, protocolo.
-- [ ] Diagramas de sequência e de estado da comunicação.
-- [ ] IPC e payloads das mensagens.
-- [ ] Justificativa das bibliotecas de rede.
-- [ ] Monitoramento e depuração da comunicação.
+- [x] Componentes de rede: cliente, servidor, banco, protocolo.
+- [x] Diagramas de sequência e de estado da comunicação.
+- [x] IPC e payloads das mensagens.
+- [x] Justificativa das bibliotecas de rede.
+- [x] Monitoramento e depuração da comunicação.
 - [ ] Apresentação final.

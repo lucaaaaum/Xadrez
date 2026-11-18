@@ -36,6 +36,26 @@ func (_u *ParticipantUpdate) SetUpdatedAt(v time.Time) *ParticipantUpdate {
 	return _u
 }
 
+// SetLeftAt sets the "left_at" field.
+func (_u *ParticipantUpdate) SetLeftAt(v time.Time) *ParticipantUpdate {
+	_u.mutation.SetLeftAt(v)
+	return _u
+}
+
+// SetNillableLeftAt sets the "left_at" field if the given value is not nil.
+func (_u *ParticipantUpdate) SetNillableLeftAt(v *time.Time) *ParticipantUpdate {
+	if v != nil {
+		_u.SetLeftAt(*v)
+	}
+	return _u
+}
+
+// ClearLeftAt clears the value of the "left_at" field.
+func (_u *ParticipantUpdate) ClearLeftAt() *ParticipantUpdate {
+	_u.mutation.ClearLeftAt()
+	return _u
+}
+
 // AddWhiteMatchIDs adds the "white_matches" edge to the Match entity by IDs.
 func (_u *ParticipantUpdate) AddWhiteMatchIDs(ids ...uuid.UUID) *ParticipantUpdate {
 	_u.mutation.AddWhiteMatchIDs(ids...)
@@ -175,6 +195,12 @@ func (_u *ParticipantUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(participant.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := _u.mutation.LeftAt(); ok {
+		_spec.SetField(participant.FieldLeftAt, field.TypeTime, value)
+	}
+	if _u.mutation.LeftAtCleared() {
+		_spec.ClearField(participant.FieldLeftAt, field.TypeTime)
+	}
 	if _u.mutation.WhiteMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -288,6 +314,26 @@ type ParticipantUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *ParticipantUpdateOne) SetUpdatedAt(v time.Time) *ParticipantUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetLeftAt sets the "left_at" field.
+func (_u *ParticipantUpdateOne) SetLeftAt(v time.Time) *ParticipantUpdateOne {
+	_u.mutation.SetLeftAt(v)
+	return _u
+}
+
+// SetNillableLeftAt sets the "left_at" field if the given value is not nil.
+func (_u *ParticipantUpdateOne) SetNillableLeftAt(v *time.Time) *ParticipantUpdateOne {
+	if v != nil {
+		_u.SetLeftAt(*v)
+	}
+	return _u
+}
+
+// ClearLeftAt clears the value of the "left_at" field.
+func (_u *ParticipantUpdateOne) ClearLeftAt() *ParticipantUpdateOne {
+	_u.mutation.ClearLeftAt()
 	return _u
 }
 
@@ -459,6 +505,12 @@ func (_u *ParticipantUpdateOne) sqlSave(ctx context.Context) (_node *Participant
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(participant.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.LeftAt(); ok {
+		_spec.SetField(participant.FieldLeftAt, field.TypeTime, value)
+	}
+	if _u.mutation.LeftAtCleared() {
+		_spec.ClearField(participant.FieldLeftAt, field.TypeTime)
 	}
 	if _u.mutation.WhiteMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{

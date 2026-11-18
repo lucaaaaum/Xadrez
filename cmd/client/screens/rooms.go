@@ -20,6 +20,7 @@ type RoomsScreen struct {
 	newRoom      string
 	editingRoom  bool
 	errorMessage string
+	notice       string
 
 	refresh bool
 	create  bool
@@ -32,6 +33,16 @@ func NewRoomsScreen(session *Session) *RoomsScreen {
 	s := &RoomsScreen{session: session, active: -1, refresh: true}
 	s.next = s
 	return s
+}
+
+func newRoomsScreenWithNotice(session *Session, notice string) *RoomsScreen {
+	s := NewRoomsScreen(session)
+	s.notice = notice
+	return s
+}
+
+func roomClosedNotice(room string) string {
+	return "a sala " + room + " foi fechada pelo administrador"
 }
 
 func (s *RoomsScreen) HandleEvent(event components.Event) {
@@ -135,6 +146,9 @@ func (s *RoomsScreen) Render() error {
 		s.back = true
 	}
 
+	if s.errorMessage == "" && s.notice != "" {
+		rl.DrawText(s.notice, int32(margin), int32(70+listHeight+spacing), textSize, rl.DarkGray)
+	}
 	drawError(s.errorMessage, 70+listHeight+spacing)
 	if s.session.renderInvite() {
 		s.accept = true

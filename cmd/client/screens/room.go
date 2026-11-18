@@ -53,6 +53,27 @@ func (s *RoomScreen) HandleEvent(event components.Event) {
 			s.next = s.matchScreen(match)
 			return
 		}
+	case "room_updated":
+		if room, ok := event.Payload.(messages.RoomResponse); ok && room.Room == s.room.Room {
+			s.room = room
+			return
+		}
+	case "leave_room_ok":
+		if response, ok := event.Payload.(messages.LeaveRoomResponse); ok && response.Room == s.room.Room {
+			s.next = NewRoomsScreen(s.session)
+			return
+		}
+	case "room_closed":
+		if response, ok := event.Payload.(messages.LeaveRoomResponse); ok && response.Room == s.room.Room {
+			s.next = newRoomsScreenWithNotice(s.session, roomClosedNotice(response.Room))
+			return
+		}
+	case "room_invite_declined":
+		if response, ok := event.Payload.(messages.InviteResponse); ok && response.Room == s.room.Room {
+			s.infoMessage = response.To + " recusou o convite"
+			s.errorMessage = ""
+			return
+		}
 	}
 	if next, ok := s.session.handleCommonEvent(event); ok {
 		if next != nil {
@@ -111,7 +132,7 @@ func (s *RoomScreen) Update(ctx context.Context) (components.Screen, error) {
 	case s.accept:
 		err = s.session.acceptInvite()
 	case s.back:
-		s.next = NewRoomsScreen(s.session)
+		err = s.session.client.LeaveRoom(messages.LeaveRoomRequest{Room: s.room.Room})
 	}
 	s.refresh, s.invite, s.start, s.watch, s.accept, s.back = false, false, false, false, false, false
 	if err != nil {
@@ -176,7 +197,11 @@ func (s *RoomScreen) Render() error {
 			}
 		}
 	}
-	if button("Voltar") {
+	leaveLabel := "Sair da sala"
+	if s.isAdmin() {
+		leaveLabel = "Fechar sala"
+	}
+	if button(leaveLabel) {
 		s.back = true
 	}
 

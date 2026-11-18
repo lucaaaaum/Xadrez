@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"xadrez/internal/application/messages"
+	"xadrez/internal/domain/chess"
 	"xadrez/internal/domain/rooms"
 	"xadrez/internal/domain/users"
 	"xadrez/internal/infra/tcp"
@@ -15,17 +16,24 @@ type Notifier interface {
 	SendToUser(user, messageType string, payload any) error
 }
 
+const (
+	roomUpdatedMessageType = "room_updated"
+	roomClosedMessageType  = "room_closed"
+)
+
 type RoomHandler struct {
-	roomService rooms.RoomService
-	userService users.UserService
-	notifier    Notifier
+	roomService  rooms.RoomService
+	userService  users.UserService
+	matchService chess.MatchService
+	notifier     Notifier
 }
 
-func NewRoomHandler(roomService rooms.RoomService, userService users.UserService, notifier Notifier) *RoomHandler {
+func NewRoomHandler(roomService rooms.RoomService, userService users.UserService, matchService chess.MatchService, notifier Notifier) *RoomHandler {
 	return &RoomHandler{
-		roomService: roomService,
-		userService: userService,
-		notifier:    notifier,
+		roomService:  roomService,
+		userService:  userService,
+		matchService: matchService,
+		notifier:     notifier,
 	}
 }
 
@@ -50,7 +58,9 @@ func (h *RoomHandler) HandleJoinRoom(ctx context.Context, request messages.JoinR
 	if err != nil {
 		return messages.RoomResponse{}, err
 	}
-	return roomResponse(room), nil
+	response := roomResponse(room)
+	notifyParticipants(h.notifier, room.Participants, name, roomUpdatedMessageType, response)
+	return response, nil
 }
 
 func (h *RoomHandler) HandleListRooms(ctx context.Context, request messages.ListRoomsRequest) (messages.ListRoomsResponse, error) {
@@ -94,6 +104,80 @@ func (h *RoomHandler) HandleInviteToRoom(ctx context.Context, request messages.I
 		log.Warn("falha ao entregar convite", "sala", invite.RoomName, "convidado", invite.To, "erro", err)
 	}
 	return response, nil
+}
+
+func (h *RoomHandler) HandleDeclineInvite(ctx context.Context, request messages.DeclineInviteRequest) (messages.InviteResponse, error) {
+	invitee, err := requireUser(ctx)
+	if err != nil {
+		return messages.InviteResponse{}, err
+	}
+	invite, err := h.roomService.DeclineInvite(ctx, request.Room, invitee)
+	if err != nil {
+		return messages.InviteResponse{}, err
+	}
+	response := messages.InviteResponse{
+		Room: invite.RoomName,
+		From: invite.From,
+		To:   invite.To,
+	}
+	if err := h.notifier.SendToUser(invite.From, "room_invite_declined", response); err != nil {
+		log.Warn("falha ao avisar o administrador da recusa", "sala", invite.RoomName, "administrador", invite.From, "erro", err)
+	}
+	return response, nil
+}
+
+func (h *RoomHandler) HandleLeaveRoom(ctx context.Context, request messages.LeaveRoomRequest) (messages.LeaveRoomResponse, error) {
+	name, err := requireUser(ctx)
+	if err != nil {
+		return messages.LeaveRoomResponse{}, err
+	}
+	room, err := h.roomService.GetRoom(ctx, request.Room)
+	if err != nil {
+		return messages.LeaveRoomResponse{}, err
+	}
+	if !slices.Contains(room.Participants, name) {
+		return messages.LeaveRoomResponse{}, tcp.NewClientError("você não está na sala %s", request.Room)
+	}
+
+	match, ended, err := h.matchService.Leave(ctx, request.Room, name, room.Admin == name)
+	if err != nil {
+		return messages.LeaveRoomResponse{}, err
+	}
+	if ended {
+		notifyParticipants(h.notifier, room.Participants, name, matchUpdatedMessageType, matchResponse(match))
+	}
+
+	closed, err := h.roomService.LeaveRoom(ctx, request.Room, name)
+	if err != nil {
+		return messages.LeaveRoomResponse{}, err
+	}
+	response := messages.LeaveRoomResponse{Room: request.Room, Closed: closed}
+	if closed {
+		notifyParticipants(h.notifier, room.Participants, name, roomClosedMessageType, response)
+	} else {
+		h.notifyRoomUpdated(ctx, request.Room, name)
+	}
+	return response, nil
+}
+
+func (h *RoomHandler) notifyRoomUpdated(ctx context.Context, roomName, author string) {
+	room, err := h.roomService.GetRoom(ctx, roomName)
+	if err != nil {
+		log.Error("falha ao buscar a sala para notificar", "sala", roomName, "erro", err)
+		return
+	}
+	notifyParticipants(h.notifier, room.Participants, author, roomUpdatedMessageType, roomResponse(room))
+}
+
+func notifyParticipants(notifier Notifier, participants []string, author, messageType string, payload any) {
+	for _, participant := range participants {
+		if participant == author {
+			continue
+		}
+		if err := notifier.SendToUser(participant, messageType, payload); err != nil {
+			log.Debug("participante não notificado", "tipo", messageType, "usuário", participant, "erro", err)
+		}
+	}
 }
 
 func roomResponse(room rooms.Room) messages.RoomResponse {

@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -23,7 +24,13 @@ func NewTCPServer(handlerManager *HandlerManager) *TCPServer {
 }
 
 func (s *TCPServer) ListenAndServe(address string) error {
-	ln, err := net.Listen("tcp", address)
+	tlsCert, err := tls.LoadX509KeyPair("cert.pem", "key.pem")
+	if err != nil {
+		return fmt.Errorf("erro ao carregar certificado TLS: %w", err)
+	}
+	ln, err := tls.Listen("tcp", address, &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+	})
 	if err != nil {
 		return fmt.Errorf("erro ao iniciar o servidor: %w", err)
 	}

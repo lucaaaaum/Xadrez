@@ -22,6 +22,7 @@ func (Participant) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("room_id", uuid.UUID{}).Immutable(),
 		field.UUID("user_id", uuid.UUID{}).Immutable(),
+		field.Time("left_at").Optional().Nillable(),
 	}
 }
 
