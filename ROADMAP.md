@@ -149,11 +149,11 @@
 - [x] Verificação com Wireshark de que o tráfego está cifrado e íntegro.
 - [ ] Testes de robustez (man in the middle, DoS).
 
-## Documentação
+## Documentação (no README)
 
-- [ ] Componentes de rede: cliente, servidor, banco, protocolo.
-- [ ] Diagramas de sequência e de estado da comunicação.
-- [ ] IPC e payloads das mensagens.
-- [ ] Justificativa das bibliotecas de rede.
-- [ ] Monitoramento e depuração da comunicação.
+- [x] Componentes de rede: cliente, servidor, banco, protocolo.
+- [x] Diagramas de sequência e de estado da comunicação.
+- [x] IPC e payloads das mensagens.
+- [x] Justificativa das bibliotecas de rede.
+- [x] Monitoramento e depuração da comunicação.
 - [ ] Apresentação final.
