@@ -10,6 +10,8 @@ O projeto tem três partes:
 
 A comunicação é um protocolo próprio de mensagens JSON sobre **TCP com TLS**.
 
+**Demonstração em vídeo:** https://www.youtube.com/watch?v=FGbAlkTOUMk
+
 ## Sumário
 
 - [Requisitos atendidos](#requisitos-atendidos)
